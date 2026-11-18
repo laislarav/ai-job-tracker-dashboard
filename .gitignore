@@ -1,0 +1,12 @@
+# Personal data from a real job search. Never commit these.
+/reports/
+/job_search_tracker.csv
+/documents/applications/**
+/dashboard.config.json
+
+# Python
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

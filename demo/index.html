@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Search · Board</title>
+<style>
+  :root{
+    --bg:#f8f1e2;
+    --paper:#fffcf5;
+    --ink:#1f1d1a;
+    --ink-soft:#4a443b;
+    --muted:#736b5e;
+    --line:#ecdfc9;
+    --line-soft:#f1e7d5;
+    --shadow:0 1px 2px rgba(80,60,30,.05), 0 8px 20px rgba(80,60,30,.05);
+    --dark:#1f1d1a;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    --accent:#7f9a52;
+    /* chart hues — one per application status, so a color means the same thing everywhere */
+    --c-drafted:#8c7a5c;
+    --c-applied:#5f7ba8;
+    --c-reply:#7f9ec1;
+    --c-interview:#bc5c82;
+    --c-hold:#a98420;
+    --c-offer:#775ca6;
+    --c-hired:#687f3b;
+    --c-closed:#a2675e;
+    --c-neutral:#9b8b6e;
+  }
+  *{box-sizing:border-box}
+  html,body{min-height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:var(--font);
+    -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;
+  }
+  button{font-family:inherit;cursor:pointer}
+  a{color:#6a7f45;text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* top bar */
+  .topbar{display:flex;align-items:center;gap:14px;padding:20px 34px 0}
+  .brand-mark{
+    height:34px;padding:0 14px;border-radius:10px;display:inline-flex;align-items:center;
+    background:var(--dark);color:#f8f1e2;font-size:12px;font-weight:750;
+    letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;
+  }
+  .spacer{flex:1}
+  .updated{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+  .lang-block{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+  .lang{display:inline-flex;background:#fffdf8;border:1px solid var(--line);border-radius:999px;padding:3px}
+  .lang button{
+    border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:650;
+    padding:5px 11px;border-radius:999px;letter-spacing:.03em;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .flag{width:16px;height:11px;border-radius:2px;flex:0 0 16px;display:block}
+  .lang button.on{background:var(--dark);color:#f8f1e2}
+
+  /* page */
+  .page{width:100%;max-width:1680px;margin:0 auto;padding:0 34px 40px}
+  .hero{padding:30px 0 22px}
+  .hero h1{margin:0;font-size:38px;line-height:1.1;letter-spacing:-.035em;font-weight:720}
+  .hero p{margin:9px 0 0;font-size:14px;color:var(--muted)}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+  .stat{
+    background:var(--paper);border:1px solid var(--line);border-radius:18px;
+    padding:15px 17px;box-shadow:var(--shadow);min-height:96px;
+    display:flex;flex-direction:column;justify-content:space-between;
+  }
+  /* one shared small-caps label step: stat keys, chart titles, fact keys, section titles */
+  .stat .k,.chart-card h3,.fact .k,.sec h3{
+    font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  }
+  .stat .v{font-size:30px;font-weight:730;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+  .stat .sub{font-size:12px;color:var(--muted);margin-top:6px}
+  .stat.conv .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .stat.conv .v{font-size:28px}
+  .ring{width:48px;height:48px;flex:0 0 48px}
+
+  /* toolbar */
+  .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:22px 0 16px}
+  .chips{display:flex;gap:7px;flex-wrap:wrap}
+  .chip{
+    border:1px solid var(--line);background:#fffdf8;color:var(--ink-soft);
+    font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;
+    display:inline-flex;align-items:center;gap:7px;
+  }
+  .chip .n{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .chip.active{background:var(--dark);border-color:var(--dark);color:#f8f1e2}
+  .chip.active .n{color:#bdb3a0}
+  .chip:hover:not(.active){background:#fff}
+  .search{position:relative;display:flex;align-items:center}
+  .search svg{position:absolute;left:12px;opacity:.4}
+  .search input{
+    border:1px solid var(--line);background:#fffdf8;border-radius:999px;
+    padding:9px 16px 9px 34px;font-size:13px;width:240px;color:var(--ink);
+    font-family:inherit;outline:none;
+  }
+  .search input:focus{border-color:#cbb994;box-shadow:0 0 0 4px rgba(203,185,148,.25)}
+
+  /* board */
+  .board{display:flex;gap:16px;overflow-x:auto;padding:2px 2px 24px;align-items:flex-start}
+  .board::-webkit-scrollbar{height:10px}
+  .board::-webkit-scrollbar-thumb{background:#e3d6bd;border-radius:99px}
+  .col{min-width:286px;width:286px;flex:0 0 286px;display:flex;flex-direction:column}
+  .col-head{display:flex;align-items:center;gap:9px;padding:2px 4px 12px}
+  .pill{
+    display:inline-flex;align-items:center;padding:6px 13px;border-radius:999px;
+    font-size:12px;font-weight:700;background:var(--pill-bg);color:#fff;
+  }
+  .col-count{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .col-head .grow{flex:1}
+  .col-head .plus{
+    border:none;background:transparent;color:var(--muted);width:26px;height:26px;
+    border-radius:999px;font-size:17px;line-height:1;display:grid;place-items:center;
+  }
+  .col-head .plus:hover{background:rgba(120,95,50,.08);color:var(--ink)}
+  .cards{display:flex;flex-direction:column;gap:10px;min-height:20px}
+  .card{
+    background:var(--tint);border:1px solid rgba(60,45,20,.07);border-radius:18px;
+    padding:14px;box-shadow:var(--shadow);cursor:pointer;
+    transition:transform .14s ease, box-shadow .14s ease;animation:fadeUp .22s ease both;
+  }
+  .card:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(80,60,30,.07),0 14px 26px rgba(80,60,30,.10)}
+  .card:focus-visible{outline:2px solid var(--dark);outline-offset:2px}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+  .card-top{display:flex;align-items:center;gap:10px}
+  .avatar{
+    width:30px;height:30px;border-radius:50%;flex:0 0 30px;display:grid;place-items:center;
+    background:rgba(255,255,255,.7);font-size:12px;font-weight:750;color:#3a342b;
+  }
+  .card-t{min-width:0;flex:1}
+  .card-company{font-size:12px;color:rgba(35,30,22,.62);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-role{
+    font-size:14px;font-weight:700;line-height:1.28;margin-top:1px;color:#241f18;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .meta{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+  .meta-line{display:flex;align-items:baseline;gap:8px;font-size:12px}
+  .meta-k{color:rgba(35,30,22,.55);min-width:70px;font-weight:600}
+  .meta-v{color:#2c261d;font-variant-numeric:tabular-nums;font-weight:600}
+  .meta-line.warn .meta-v{color:#8f3b2f}
+  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:11px}
+  .tag{
+    font-size:12px;font-weight:650;color:#3a342b;background:rgba(255,255,255,.55);
+    border-radius:999px;padding:3px 9px;white-space:nowrap;
+  }
+  .empty-col{
+    border:1.5px dashed rgba(120,95,50,.22);border-radius:16px;padding:18px 10px;
+    text-align:center;font-size:12px;color:var(--muted);
+  }
+
+  /* charts */
+  .insights{padding:26px 0 16px;scroll-margin-top:20px}
+  .insights-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:16px}
+  .insights h2{font-size:28px;font-weight:700;letter-spacing:-.03em;margin:0}
+  .insights .head-note{font-size:12.5px;color:var(--muted)}
+  .charts{display:grid;grid-template-columns:.92fr 1.08fr;gap:14px;align-items:stretch}
+  .chart-card{
+    background:var(--paper);border:1px solid var(--line);border-radius:20px;
+    padding:20px 22px;display:flex;flex-direction:column;gap:16px;min-width:0;
+  }
+  .chart-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .chart-head h3{margin:0}
+  .chart-note{font-size:12px;color:var(--muted)}
+  .chart-body{flex:1;display:flex;flex-direction:column;justify-content:center;min-width:0}
+  .chart-card svg{display:block;width:100%;height:auto;font-family:inherit}
+
+  /* status — ring, one blue, tone follows volume */
+  /* status — treemap: one square per status, size by volume */
+  .treemap{position:relative;width:100%;height:260px;border-radius:10px;overflow:hidden}
+  #chart-status{position:relative}
+  .tm-tip{white-space:normal;min-width:150px}
+  .tm-cell{
+    position:absolute;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;
+    padding:8px 10px;overflow:hidden;text-align:right;
+  }
+  .tm-name{font-size:12px;line-height:1.2;color:#4a443b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .tm-pct{font-size:16px;font-weight:700;letter-spacing:-.02em;line-height:1;margin-top:2px;color:var(--ink)}
+  .tm-cell.on-dark .tm-name{color:rgba(255,252,245,.78)}
+  .tm-cell.on-dark .tm-pct{color:#fffcf5}
+  .tm-cell.tight{padding:6px 8px}
+  .tm-cell.tight .tm-pct{font-size:14px}
+  .tm-cell.xs .tm-name,.tm-cell.xs .tm-pct{display:none}
+  @media(max-width:680px){.treemap{height:220px}}
+  .legend{display:flex;flex-direction:column;gap:7px;flex:1 1 170px;min-width:0}
+  .lg{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--ink-soft)}
+  .lg i{width:9px;height:9px;border-radius:2px;flex:0 0 9px}
+  .lg span{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lg b{font-weight:650;color:var(--ink);font-variant-numeric:tabular-nums}
+  .lg em{font-style:normal;font-size:12px;color:var(--muted);width:38px;text-align:right;font-variant-numeric:tabular-nums}
+
+  /* sector — thin ranking bars, one green */
+  .sector-list{display:flex;flex-direction:column;gap:11px}
+  .sector-row{display:grid;grid-template-columns:clamp(84px,36%,156px) minmax(0,1fr) 22px;align-items:center;gap:12px}
+  .sector-k{
+    font-size:12px;color:var(--ink-soft);text-align:right;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .sector-bar{height:15px;border-radius:2px;background:var(--tone);width:var(--w)}
+  .sector-v{font-size:12px;font-weight:650;color:var(--ink);font-variant-numeric:tabular-nums;text-align:right}
+
+  /* channel — one number, one bar, one purple */
+  .channel-body{display:flex;flex-direction:column;justify-content:center;gap:14px;height:100%}
+  .channel-num{display:flex;align-items:baseline;gap:10px}
+  .channel-num b{font-size:52px;font-weight:680;line-height:.9;letter-spacing:-.03em}
+  .channel-num span{font-size:12.5px;color:var(--ink-soft)}
+  .channel-bar{height:16px;border-radius:2px;background:var(--c-offer);width:100%}
+  .channel-legend{display:flex;gap:20px;font-size:12px;color:var(--muted)}
+  .channel-legend b{color:var(--ink);font-weight:650}
+  .channel-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:2px}
+  .ctile{
+    background:#fdf7ea;border:1px solid var(--line-soft);border-radius:12px;
+    padding:10px 12px;display:flex;flex-direction:column;gap:3px;
+  }
+  .ctile span{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+  .ctile b{font-size:23px;font-weight:650;line-height:1}
+  .ctile.dim b{color:var(--muted)}
+
+  /* funnel — thick widening bars, one pink, tone by volume */
+  .funnel{display:flex;flex-direction:column;gap:9px}
+  .funnel-row{display:grid;grid-template-columns:clamp(84px,34%,132px) minmax(0,1fr) 54px;align-items:center;gap:12px}
+  .funnel-k{font-size:12px;color:var(--ink-soft);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .funnel-track{display:flex;align-items:center;gap:9px;min-width:0}
+  .funnel-bar{height:26px;border-radius:2px;background:var(--tone);flex:0 0 auto}
+  .funnel-n{font-size:12px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .funnel-v{font-size:12px;font-weight:500;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+  .chart-empty{
+    font-size:12.5px;color:var(--muted);background:#fdf7ea;border:1px dashed #e3d6bd;
+    border-radius:12px;padding:16px 14px;
+  }
+  @media(max-width:900px){.charts{grid-template-columns:1fr}}
+
+  /* pace — heatmap, two lines, monthly bars */
+  .daily-block{padding-bottom:0}
+  .charts.pace{grid-template-columns:1fr 1fr}
+  .charts.pace + .charts.pace{margin-top:14px}
+  .charts.pace.two{grid-template-columns:minmax(0,clamp(360px,42%,460px)) minmax(0,1fr)}
+  .pace-card .chart-head{align-items:flex-start;margin-bottom:10px}
+  .pace-card{height:100%}
+  .hm-card{height:100%}
+  .hm-card .chart-body{flex:0 0 auto;align-items:center;justify-content:center}
+  .charts.pace .pace-card .chart-body{justify-content:center}
+  .line-chart{position:relative;width:100%}
+  .line-chart svg{display:block;width:100%;height:auto;overflow:visible}
+  .line-chart .grid-line{stroke:#e9dcc6;stroke-width:1;stroke-dasharray:3 4}
+  .line-chart .axis-line{stroke:#dccdb2;stroke-width:1}
+  .line-chart .axis-text{fill:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+  .line-chart .series{fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .line-chart .hover-line{stroke:#c9b795;stroke-width:1;stroke-dasharray:3 3}
+  .line-chart .hover-dot{stroke:#fff;stroke-width:2}
+  .line-tip{
+    position:absolute;pointer-events:none;opacity:0;transform:translateY(4px);
+    background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 11px;
+    box-shadow:0 8px 24px rgba(60,45,20,.14);font-size:12.5px;z-index:6;
+    transition:opacity .12s ease,transform .12s ease;white-space:nowrap;
+  }
+  .line-tip.on{opacity:1;transform:none}
+  .line-tip .t{font-size:12px;color:var(--muted);margin-bottom:5px}
+  .line-tip .row{display:flex;align-items:center;gap:7px;font-weight:650;color:var(--ink)}
+  .line-tip .row i{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+  .line-tip .x{margin-top:4px;font-size:12px;color:var(--muted)}
+
+  /* heatmap — one square per day, blue intensity by volume */
+  .hm-card{position:relative}
+  .heatmap{--hm-gap:4px;--hm-label:44px;--hm-0:#eef1f6;--hm-1:#c2d0e4;--hm-2:#8aa5c8;--hm-3:#43648f;display:flex;flex-direction:column;gap:10px;width:fit-content;max-width:100%}
+  .hm-months{display:flex;gap:var(--hm-gap);padding-left:calc(var(--hm-label) + 10px);height:18px}
+  .hm-months span{font-size:12px;color:var(--muted);white-space:nowrap}
+  .hm-body{display:flex;gap:10px}
+  .hm-days{display:flex;flex-direction:column;gap:var(--hm-gap);width:var(--hm-label);flex:0 0 var(--hm-label)}
+  .hm-days span{font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:flex-end;padding-right:2px;height:var(--hm-sq)}
+  .hm-weeks{display:flex;gap:var(--hm-gap)}
+  .hm-week{display:flex;flex-direction:column;gap:var(--hm-gap)}
+  .hm-cell{
+    width:var(--hm-sq);height:var(--hm-sq);border-radius:3px;background:var(--hm-0);
+    transition:transform .1s ease,outline-color .1s ease;cursor:default;
+  }
+  .hm-cell.l1{background:var(--hm-1)}
+  .hm-cell.l2{background:var(--hm-2)}
+  .hm-cell.l3{background:var(--hm-3)}
+  .hm-cell.void{background:transparent;pointer-events:none}
+  .hm-cell:hover{outline:2px solid var(--ink);outline-offset:1px}
+  .hm-tip{max-width:238px;white-space:normal;padding:10px 13px}
+  .hm-tip .t{font-size:12px;color:var(--muted);margin-bottom:2px}
+  .hm-tip .big{font-size:19px;font-weight:700;letter-spacing:-.02em;margin:1px 0 9px}
+  .hm-tip .kv{display:flex;justify-content:space-between;gap:16px;font-size:12.5px;color:var(--muted);padding:2px 0}
+  .hm-tip .kv b{color:var(--ink);font-weight:650;font-variant-numeric:tabular-nums}
+  .hm-tip .kv b.up{color:#5c7a3a}
+
+  /* by month — progress bars */
+  .months{--mn:96px;display:flex;flex-direction:column;justify-content:center;gap:0;padding:0;height:100%}
+  .month-row{flex:1;display:flex;flex-direction:column;justify-content:center;gap:9px;padding:12px 0}
+  .month-row + .month-row{border-top:1px solid var(--line-soft)}
+  .month-main{display:flex;align-items:center;gap:14px}
+  .month-name{font-size:15px;font-weight:700;letter-spacing:-.01em;min-width:var(--mn)}
+  .month-track{flex:1;height:20px;border-radius:999px;background:#ece2cf;overflow:hidden}
+  .month-fill{display:block;height:100%;border-radius:999px;background:var(--c-applied)}
+  .month-n{font-size:17px;font-weight:730;min-width:32px;text-align:right;font-variant-numeric:tabular-nums}
+  .month-sub{font-size:12.5px;color:var(--muted);padding-left:calc(var(--mn) + 14px)}
+  @media(max-width:1100px){
+    .months{--mn:84px}
+    .month-name{font-size:14px}
+    .month-sub{padding-left:calc(var(--mn) + 12px)}
+  }
+
+  /* board heading above the chips */
+  .board-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:30px 0 0}
+  .board-head h2{margin:0;font-size:28px;font-weight:700;letter-spacing:-.03em}
+  .board-head .head-note{font-size:12.5px;color:var(--muted)}
+
+  @media(max-width:720px){
+    .charts.pace,.charts.pace.two{grid-template-columns:1fr}
+  }
+
+  @media(max-width:480px){
+    .insights-head{flex-direction:column;align-items:flex-start;gap:4px}
+    .chart-card{padding:16px}
+    .legend{flex:1 1 100%}
+    .sector-row{grid-template-columns:minmax(0,1fr) auto;gap:6px 10px}
+    .sector-k{grid-column:1/-1;text-align:left}
+    .sector-bar{grid-column:1}
+    .sector-v{grid-column:2}
+    .funnel-row{grid-template-columns:minmax(0,1fr) auto;gap:6px 10px}
+    .funnel-k{grid-column:1/-1;text-align:left}
+    .funnel-track{grid-column:1}
+    .funnel-v{grid-column:2}
+    .channel-num b{font-size:44px}
+  }
+
+  /* drawer */
+  .scrim{position:fixed;inset:0;background:rgba(40,32,20,.26);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .drawer{
+    position:fixed;top:0;right:0;height:100%;width:min(560px,100%);
+    background:var(--paper);z-index:50;box-shadow:-18px 0 50px rgba(40,32,20,.16);
+    transform:translateX(100%);transition:transform .28s cubic-bezier(.22,.61,.36,1);
+    display:flex;flex-direction:column;border-radius:24px 0 0 24px;
+  }
+  .drawer:focus{outline:none}
+  .drawer.open{transform:none}
+  .drawer-head{padding:22px 24px 18px;border-bottom:1px solid var(--line-soft);display:flex;gap:13px;align-items:flex-start}
+  .drawer-head .avatar{width:42px;height:42px;flex:0 0 42px;border-radius:50%;font-size:15px}
+  .drawer-head h2{font-size:18px;margin:0;line-height:1.25;letter-spacing:-.015em}
+  .drawer-head .co{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .drawer-head .close{
+    margin-left:auto;border:none;background:#f2e9d8;color:var(--ink-soft);
+    width:30px;height:30px;border-radius:999px;font-size:14px;display:grid;place-items:center;flex:0 0 30px;
+  }
+  .drawer-head .close:hover{background:#ebdfc9}
+  .drawer-body{overflow-y:auto;padding:18px 24px 48px;flex:1}
+  .status-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .facts{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;
+    background:#fdf7ea;border:1px solid var(--line-soft);border-radius:14px;padding:14px 16px;margin-bottom:22px;
+  }
+  .fact .v{font-size:12.5px;color:var(--ink);margin-top:3px;font-weight:600}
+  .sec{margin-bottom:24px}
+  .sec h3{
+    margin:0 0 9px;display:flex;align-items:center;gap:7px;
+  }
+  .sec h3 .count{font-weight:600;color:var(--ink-soft)}
+  .cap{font-size:12px;color:var(--muted);margin:-4px 0 8px}
+  ul.pretty{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+  ul.pretty li{font-size:13px;line-height:1.5;color:var(--ink-soft);padding-left:17px;position:relative}
+  ul.pretty li::before{content:"";position:absolute;left:3px;top:7px;width:5px;height:5px;border-radius:50%;background:#cdbfa5}
+  ol.talk{margin:0;padding:0;list-style:none;counter-reset:t;display:flex;flex-direction:column;gap:10px}
+  ol.talk li{counter-increment:t;position:relative;padding-left:32px;font-size:13px;line-height:1.5;color:var(--ink-soft)}
+  ol.talk li::before{
+    content:counter(t);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;
+    background:#efe4ce;color:#6b5a3a;font-size:12px;font-weight:750;display:grid;place-items:center;
+  }
+  .quote{background:#f4ead6;border-radius:12px;padding:11px 13px;font-size:12.5px;line-height:1.55;color:#4f4330;margin:0 0 9px}
+  .note{
+    background:#fdf7ea;border:1px solid var(--line-soft);border-radius:12px;
+    padding:11px 13px;font-size:12.5px;line-height:1.5;color:var(--ink-soft);white-space:pre-wrap;
+  }
+  details.orig summary{
+    cursor:pointer;font-size:12px;font-weight:650;color:var(--ink-soft);
+    background:#fdf7ea;border:1px solid var(--line-soft);border-radius:12px;padding:10px 13px;
+  }
+  details.orig[open] summary{border-radius:12px 12px 0 0;border-bottom:none}
+  details.orig .note{border-radius:0 0 12px 12px;border-top:none}
+
+  /* history timeline */
+  .timeline{list-style:none;margin:0;padding:0;position:relative}
+  .timeline::before{content:"";position:absolute;left:15px;top:8px;bottom:8px;width:1px;background:var(--line)}
+  .tl-item{position:relative;display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;padding:0 0 16px 32px}
+  .tl-item:last-child{padding-bottom:2px}
+  .tl-dot{position:absolute;left:9px;top:4px;width:13px;height:13px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 3px var(--paper)}
+  .tl-date{font-size:12px;color:var(--muted);font-weight:650;padding-top:3px;font-variant-numeric:tabular-nums}
+  .tl-body b{display:block;font-size:12.5px;font-weight:750;color:var(--ink);margin-bottom:3px}
+  .tl-body p{margin:0;font-size:12.5px;line-height:1.5;color:var(--ink-soft)}
+  .tl-applied .tl-dot{background:#5f7ba8}
+  .tl-interview .tl-dot{background:#bc5c82}
+  .tl-process .tl-dot{background:#8c7a5c}
+  .tl-hold .tl-dot{background:#a98420}
+  .tl-rejected .tl-dot{background:#a2675e}
+  .tl-offer .tl-dot{background:#775ca6}
+  .tl-hired .tl-dot{background:#687f3b}
+  .tl-followup .tl-dot{background:#9b8b6e}
+  .tl-note .tl-dot{background:#b9ac93}
+  details.ctx{margin-top:12px}
+  details.ctx summary{
+    cursor:pointer;font-size:12px;font-weight:650;color:var(--ink-soft);
+    background:#fdf7ea;border:1px solid var(--line-soft);border-radius:12px;padding:10px 13px;
+  }
+  details.ctx[open] summary{border-radius:12px 12px 0 0;border-bottom:none}
+  details.ctx ul{
+    margin:0;padding:11px 14px 12px 30px;background:#fdf7ea;
+    border:1px solid var(--line-soft);border-top:none;border-radius:0 0 12px 12px;
+  }
+  .stages{display:flex;flex-wrap:wrap;gap:6px}
+  .stage{font-size:12px;padding:5px 10px;border-radius:999px;background:#f1e7d5;color:var(--muted)}
+  .stage.done{background:#e4ecd3;color:#586d33}
+  .stage.now{background:#f6dfd0;color:#9a5b3a}
+  .link-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .btn-link{
+    display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);
+    background:#fffdf8;border-radius:999px;padding:7px 12px;font-size:12px;color:var(--ink-soft);font-weight:600;
+  }
+  .btn-link:hover{background:#fff;text-decoration:none}
+  .empty{
+    font-size:12.5px;color:var(--muted);background:#fdf7ea;border:1px dashed #e3d6bd;
+    border-radius:12px;padding:11px 13px;
+  }
+  kbd{background:#f1e7d5;border:1px solid #e3d6bd;border-radius:5px;padding:1px 6px;font-size:12px;font-family:inherit;color:var(--ink-soft)}
+  .toast{
+    position:fixed;left:50%;bottom:28px;transform:translate(-50%,10px);
+    background:var(--dark);color:#f8f1e2;font-size:12.5px;padding:10px 16px;border-radius:999px;
+    opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:60;
+    box-shadow:0 10px 28px rgba(40,32,20,.24);font-weight:550;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* "applying since" line under the lede */
+  .since{font-size:12.5px!important;color:var(--muted);opacity:.9}
+
+  @media(max-width:1180px){.stats{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:680px){
+    .page{padding:0 18px 32px}
+    .topbar{padding:16px 18px 0}
+    .hero h1{font-size:28px}
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .search input{width:170px}
+    .drawer{border-radius:0}
+    .updated{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand-mark">Job tracker</div>
+  <div class="spacer"></div>
+  <div class="lang-block">
+    <div class="lang" role="group" aria-label="Language">
+      <button data-lang="pt">
+        <svg class="flag" viewBox="0 0 20 14" aria-hidden="true">
+          <rect width="20" height="14" fill="#009B3A"/>
+          <path d="M10 2.1 17.7 7 10 11.9 2.3 7Z" fill="#FEDF00"/>
+          <circle cx="10" cy="7" r="2.7" fill="#002776"/>
+          <path d="M7.4 6.1c1.9-.7 3.8-.4 5.2.4" stroke="#fff" stroke-width=".7" fill="none"/>
+        </svg>
+        PT
+      </button>
+      <button data-lang="en">
+        <svg class="flag" viewBox="0 0 20 14" aria-hidden="true">
+          <rect width="20" height="14" fill="#fff"/>
+          <g fill="#B22234">
+            <rect y="0" width="20" height="1.08"/>
+            <rect y="2.15" width="20" height="1.08"/>
+            <rect y="4.31" width="20" height="1.08"/>
+            <rect y="6.46" width="20" height="1.08"/>
+            <rect y="8.62" width="20" height="1.08"/>
+            <rect y="10.77" width="20" height="1.08"/>
+            <rect y="12.92" width="20" height="1.08"/>
+          </g>
+          <rect width="8.2" height="7.6" fill="#3C3B6E"/>
+          <g fill="#fff">
+            <circle cx="1.6" cy="1.5" r=".45"/><circle cx="4.1" cy="1.5" r=".45"/><circle cx="6.6" cy="1.5" r=".45"/>
+            <circle cx="2.8" cy="3" r=".45"/><circle cx="5.3" cy="3" r=".45"/>
+            <circle cx="1.6" cy="4.5" r=".45"/><circle cx="4.1" cy="4.5" r=".45"/><circle cx="6.6" cy="4.5" r=".45"/>
+            <circle cx="2.8" cy="6" r=".45"/><circle cx="5.3" cy="6" r=".45"/>
+          </g>
+        </svg>
+        EN
+      </button>
+    </div>
+    <div class="updated"><span class="live-dot"></span><span id="updated"></span></div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="hero">
+    <h1 id="greeting"></h1>
+  </div>
+
+  <section class="stats" id="stats"></section>
+
+  <section class="insights" id="insights">
+    <div class="insights-head">
+      <h2 id="insights-title"></h2>
+      <span class="head-note" id="insights-note"></span>
+    </div>
+    <div class="charts">
+      <article class="chart-card">
+        <header class="chart-head"><h3 id="c-status"></h3><span class="chart-note" id="n-status"></span></header>
+        <div class="chart-body" id="chart-status"></div>
+      </article>
+      <article class="chart-card">
+        <header class="chart-head"><h3 id="c-sector"></h3><span class="chart-note" id="n-sector"></span></header>
+        <div class="chart-body" id="chart-sector"></div>
+      </article>
+      <article class="chart-card">
+        <header class="chart-head"><h3 id="c-channel"></h3><span class="chart-note" id="n-channel"></span></header>
+        <div class="chart-body" id="chart-channel"></div>
+      </article>
+      <article class="chart-card">
+        <header class="chart-head"><h3 id="c-funnel"></h3><span class="chart-note" id="n-funnel"></span></header>
+        <div class="chart-body" id="chart-funnel"></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="insights daily-block" aria-labelledby="pace-title">
+    <div class="insights-head">
+      <h2 id="pace-title"></h2>
+      <span class="head-note" id="pace-note"></span>
+    </div>
+    <div class="charts pace">
+      <article class="chart-card pace-card">
+        <header class="chart-head"><div><h3 id="c-daily"></h3></div></header>
+        <div class="chart-body"><div class="line-chart" id="chart-daily"></div></div>
+      </article>
+      <article class="chart-card pace-card">
+        <header class="chart-head"><div><h3 id="c-weekly"></h3></div></header>
+        <div class="chart-body"><div class="line-chart" id="chart-weekly"></div></div>
+      </article>
+    </div>
+    <div class="charts pace two">
+      <article class="chart-card pace-card hm-card">
+        <header class="chart-head"><div><h3 id="c-heat"></h3></div></header>
+        <div class="chart-body"><div class="heatmap" id="heatmap"></div></div>
+        <div class="line-tip hm-tip" id="hm-tip"></div>
+      </article>
+      <article class="chart-card pace-card">
+        <header class="chart-head"><div><h3 id="c-months"></h3></div></header>
+        <div class="chart-body"><div class="months" id="months"></div></div>
+      </article>
+    </div>
+  </section>
+
+  <div class="board-head">
+    <h2 id="board-title">Kanban</h2>
+    <span class="head-note" id="board-note"></span>
+  </div>
+
+  <div class="toolbar">
+    <div class="chips" id="chips"></div>
+    <div class="spacer"></div>
+    <label class="search">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>
+      <input id="q" type="search" aria-label="Search">
+    </label>
+  </div>
+
+  <div class="board" id="board" aria-label="Kanban"></div>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="d-title" tabindex="-1">
+  <div class="drawer-head">
+    <div class="avatar" id="d-avatar"></div>
+    <div style="min-width:0">
+      <h2 id="d-title"></h2>
+      <div class="co" id="d-co"></div>
+    </div>
+    <button class="close" id="d-close" aria-label="Close">✕</button>
+  </div>
+  <div class="drawer-body" id="d-body"></div>
+</aside>
+
+
+
+<script>
+const DATA = {"ownerName": "", "generated": "2026-11-18T19:26:02", "generatedLabel": "18/11/2026 às 19:26", "startedDate": "2026-08-24", "startedLabel": "24/08/2026", "daysSearching": 87, "appsPerWeek": 0.9, "apps": [{"id": "app-0", "company": "Northwind Labs", "role": "Senior Product Designer", "sector": "SaaS / developer tools", "sectorKey": "saas", "status": "closed", "statusRaw": "rejected", "date": "2026-08-24", "deadline": "", "fit": 83, "channel": "online", "channelKey": "online", "reachedInterview": false, "roleEn": "Senior Product Designer", "notes": "Rejected after the case round - feedback was that the systems thinking was strong but domain depth was thin", "source": "https://example.com/jobs/demo", "cvFile": "cv/main_demo.tex", "workMode": "", "skills": [], "skillsEn": [], "requirements": [], "requirementsEn": [], "adaptations": [], "adaptationsEn": [], "talkingPoints": [], "talkingPointsEn": [], "postingSummary": "", "cvSubtitle": "", "cvSubtitleEn": "", "cvProfile": "", "interviewDate": "", "resolved": "", "outcomeNotes": "", "stages": [], "history": [{"date": "2026-08-24", "kind": "applied", "text": ""}], "context": ["Rejected after the case round", "feedback was that the systems thinking was strong but domain depth was thin"]}, {"id": "app-1", "company": "Alder Health", "role": "Senior Product Designer", "sector": "Health tech", "sectorKey": "health", "status": "closed", "statusRaw": "no_response", "date": "2026-08-28", "deadline": "", "fit": 81, "channel": "online", "channelKey": "online", "reachedInterview": false, "roleEn": "Senior Product Designer", "notes": "Closed by the company - role was paused mid-process", "source": "https://example.com/jobs/demo", "cvFile": "cv/main_demo.tex", "workMode": "", "skills": [], "skillsEn": [], "requirements": [], "requirementsEn": [], "adaptations": [], "adaptationsEn": [], "talkingPoints": [], "talkingPointsEn": [], "postingSummary": "", "cvSubtitle": "", "cvSubtitleEn": "", "cvProfile": "", "interviewDate": "", "resolved": "", "outcomeNotes": "", "stages": [], "history": [{"date": "2026-08-28", "kind": "applied", "text": ""}], "context": ["Closed by the company", "role was paused mid-process"]}, {"id": "app-2", "company": "Atlas Freight", "role": "Product Designer", "sector": "Logistics software", "sectorKey": "saas", "status": "closed", "statusRaw": "rejected", "date": "2026-09-03", "deadline": "", "fit": 89, "channel": "referral", "channelKey": "online", "reachedInterview": false, "roleEn": "Product Designer", "notes": "Rejected - they moved forward with an internal candidate", "source": "https://example.com/jobs/demo", "cvFile": "cv/main_demo.tex", "workMode": "", "skills": [], "skillsEn": [], "requirements": [], "requirementsEn": [], "adaptations": [], "adaptationsEn": [], "talkingPoints": [], "talkingPointsEn": [], "postingSummary": "", "cvSubtitle": "", "cvSubtitleEn": "", "cvProfile": "", "interviewDate": "", "resolved": "", "outcomeNotes": "", "stages": [], "history": [{"date": "2026-09-03", "kind": "applied", "text": ""}], "context": ["they moved forward with an internal candidate"]}, {"id": "app-3", "company": "Corvid Security", "role": "Senior Product Designer", "sector": "Cybersecurity software", "sectorKey": "saas", "status": "applied", "statusRaw": "applied", "date": "2026-09-10", "deadline": "", "fit": 65, "channel": "online", "channelKey": "online", "reachedInterview": false, "roleEn": "Senior Product Designer", "notes": "Applied through the careers page - no reply yet", "source": "https://example.com/jobs/demo", "cvFile": "cv/main_demo.tex", "workMode": "", "skills": [], "skillsEn": [], "requirements": [], "requirementsEn": [], "adaptations": [], "adaptationsEn": [], "talkingPoints": [], "talkingPointsEn": [], "postingSummary": "", "cvSubtitle": "", "cvSubtitleEn": "", "cvProfile": "", "interviewDate": "", "resolved": "", "outcomeNotes": "", "stages": [], "history": [{"date": "2026-09-10", "kind": "applied", "text": ""}], "context": ["Applied through the careers page", "no reply yet"]}, {"id": "app-4", "company": "Meridian Pay", "role": "Staff Product Designer", "sector": "Fintech", "sectorKey": "fintech", "status": "hold", "statusRaw": "hold", "date": "2026-09-18", "deadline": "", "fit": 64, "channel": "online", "channelKey": "online", "reachedInterview": true, "roleEn": "Staff Product Designer", "notes": "On hold - they are opening the role again next quarter", "source": "https://example.com/jobs/demo", "cvFile": "cv/main_demo.tex", "workMode": "", "skills": [], "skillsEn": [], "requirements": [], "requirementsEn": [], "adaptations": [], "adaptationsEn": [], "talkingPoints": [], "talkingPointsEn": [], "postingSummary": "", "cvSubtitle": "", "cvSubtitleEn": "", "cvProfile": "", "interviewDate": "", "resolved": "", "outcomeNotes": "", "stages": [], "history": [{"date": "2026-09-18", "kind": "applied", "text": ""}], "context": ["they are opening the role again next quarter"]}, {"id": "app-5", "company": "Paperlane", "role": "Product Designer", "sector": "Education software", "sectorKey": "saas", "status": "applied", "statusRaw": "applied", "date": "2026-09-25", "deadline": "", "fit": 83, "channel": "online", "channelKey": "online", "reachedInterview": false, "roleEn": "Product Designer", "notes": "Applied - take-home sent and completed", "source": "https://example.com/jobs/demo", "cvFile": "cv/main_demo.tex", "workMode": "", "skills": [], "skillsEn": [], "requirements": [], "requirementsEn": [], "adaptations": [], "adaptationsEn": [], "talkingPoints": [], "talkingPointsEn": [], "postingSummary": "", "cvSubtitle": "", "cvSubtitleEn": "", "cvProfile": "", "interviewDate": "", "resolved": "", "outcomeNotes": "", "stages": [], "history": [{"date": "2026-09-25", "kind": "applied", "text": ""}], "context": ["take-home sent and completed"]}, {"id": "app-6", "company": "Solstice Energy", "role": "Senior Product Designer", "sector": "Climate tech", "sectorKey": "other", "status": "applied", "statusRaw": "applied", "date": "2026-10-02", "deadline": "", "fit": 94, "channel": "online", "channelKey": "online", "reachedInterview": false, "roleEn": "Senior Product Designer", "notes": "Applied - waiting on the first screen", "source": "https://example.com/jobs/demo", "cvFile": "cv/main_demo.tex", "workMode": "", "skills": [], "skillsEn": [], "requirements": [], "requirementsEn": [], "adaptations": [], "adaptationsEn": [], "talkingPoints": [], "talkingPointsEn": [], "postingSummary": "", "cvSubtitle": "", "cvSubtitleEn": "", "cvProfile": "", "interviewDate": "", "resolved": "", "outcomeNotes": "", "stages": [], "history": [{"date": "2026-10-02", "kind": "applied", "text": ""}], "context": ["waiting on the first screen"]}, {"id": "app-7", "company": "Quarry Analytics", "role": "Senior Product Designer", "sector": "Data and analytics", "sectorKey": "ai", "status": "interview", "statusRaw": "interview", "date": "2026-10-09", "deadline": "", "fit": 68, "channel": "referral", "channelKey": "online", "reachedInterview": true, "roleEn": "Senior Product Designer", "notes": "2026-10-21 first chat done - next step is a portfolio deep dive", "source": "https://example.com/jobs/demo", "cvFile": "cv/main_demo.tex", "workMode": "remote", "skills": ["End-to-end product design", "Design systems", "Research and validation"], "skillsEn": [], "requirements": ["Lead discovery with data teams and translate findings into product decisions.", "Own and evolve the component library used by three product squads.", "Partner with engineering on feasibility and handoff."], "requirementsEn": [], "adaptations": [], "adaptationsEn": [], "talkingPoints": ["Lead with the platform rebuild story", "Show how you made the design system survive three squads"], "talkingPointsEn": [], "postingSummary": "We are hiring a senior product designer to own the analytics workspace end to end. - Lead discovery with data teams and translate findings into product decisions. - Own and evolve the component library used by three product squads. - Partner with engineering on feasibility and handoff.", "cvSubtitle": "Senior Product Designer - complex data products and design systems", "cvSubtitleEn": "", "cvProfile": "", "interviewDate": "", "resolved": "", "outcomeNotes": "", "stages": [], "history": [{"date": "2026-10-09", "kind": "applied", "text": ""}, {"date": "2026-10-21", "kind": "interview", "text": "first chat done"}], "context": ["next step is a portfolio deep dive"]}, {"id": "app-8", "company": "Fern & Co", "role": "Product Designer", "sector": "E-commerce", "sectorKey": "ecommerce", "status": "applied", "statusRaw": "applied", "date": "2026-10-16", "deadline": "", "fit": 68, "channel": "online", "channelKey": "online", "reachedInterview": false, "roleEn": "Product Designer", "notes": "Applied - recruiter replied asking for availability", "source": "https://example.com/jobs/demo", "cvFile": "cv/main_demo.tex", "workMode": "", "skills": [], "skillsEn": [], "requirements": [], "requirementsEn": [], "adaptations": [], "adaptationsEn": [], "talkingPoints": [], "talkingPointsEn": [], "postingSummary": "", "cvSubtitle": "", "cvSubtitleEn": "", "cvProfile": "", "interviewDate": "", "resolved": "", "outcomeNotes": "", "stages": [], "history": [{"date": "2026-10-16", "kind": "applied", "text": ""}], "context": ["recruiter replied asking for availability"]}, {"id": "app-9", "company": "Beacon Legal", "role": "Senior Product Designer", "sector": "Legal tech software", "sectorKey": "saas", "status": "applied", "statusRaw": "applied", "date": "2026-10-27", "deadline": "", "fit": 88, "channel": "online", "channelKey": "online", "reachedInterview": false, "roleEn": "Senior Product Designer", "notes": "Applied - no reply yet", "source": "https://example.com/jobs/demo", "cvFile": "cv/main_demo.tex", "workMode": "", "skills": [], "skillsEn": [], "requirements": [], "requirementsEn": [], "adaptations": [], "adaptationsEn": [], "talkingPoints": [], "talkingPointsEn": [], "postingSummary": "", "cvSubtitle": "", "cvSubtitleEn": "", "cvProfile": "", "interviewDate": "", "resolved": "", "outcomeNotes": "", "stages": [], "history": [{"date": "2026-10-27", "kind": "applied", "text": ""}], "context": ["no reply yet"]}, {"id": "app-10", "company": "Tidewater Care", "role": "Senior Product Designer", "sector": "Health care", "sectorKey": "health", "status": "interview", "statusRaw": "interview", "date": "2026-11-05", "deadline": "", "fit": 62, "channel": "online", "channelKey": "online", "reachedInterview": true, "roleEn": "Senior Product Designer", "notes": "2026-11-12 screen done - debrief promised for next week", "source": "https://example.com/jobs/demo", "cvFile": "cv/main_demo.tex", "workMode": "hybrid", "skills": ["Complex workflow design", "Accessibility", "Service blueprinting"], "skillsEn": [], "requirements": ["Map multi-role workflows and reduce handoff errors.", "Run research with clinicians and test prototypes."], "requirementsEn": [], "adaptations": [], "adaptationsEn": [], "talkingPoints": ["Emphasise the accessibility audit", "Bring one example of mapping an undocumented process"], "talkingPointsEn": [], "postingSummary": "Design care coordination workflows for clinical and operational teams. - Map multi-role workflows and reduce handoff errors. - Run research with clinicians and test prototypes.", "cvSubtitle": "Senior Product Designer - care delivery workflows", "cvSubtitleEn": "", "cvProfile": "", "interviewDate": "", "resolved": "", "outcomeNotes": "", "stages": [], "history": [{"date": "2026-11-05", "kind": "applied", "text": ""}], "context": ["debrief promised for next week"]}, {"id": "app-11", "company": "Orbit Studio", "role": "Product Designer", "sector": "Design consultancy", "sectorKey": "consulting", "status": "drafted", "statusRaw": "drafted", "date": "2026-11-14", "deadline": "", "fit": 78, "channel": "online", "channelKey": "", "reachedInterview": false, "roleEn": "Product Designer", "notes": "Drafted - need to finish the CV before sending", "source": "https://example.com/jobs/demo", "cvFile": "cv/main_demo.tex", "workMode": "", "skills": [], "skillsEn": [], "requirements": [], "requirementsEn": [], "adaptations": [], "adaptationsEn": [], "talkingPoints": [], "talkingPointsEn": [], "postingSummary": "", "cvSubtitle": "", "cvSubtitleEn": "", "cvProfile": "", "interviewDate": "", "resolved": "", "outcomeNotes": "", "stages": [], "history": [{"date": "2026-11-14", "kind": "applied", "text": ""}], "context": ["need to finish the CV before sending"]}]};
+
+const COLUMNS = [
+  {id:'drafted',   tint:'#eee4d1', pill:'var(--c-drafted)'},
+  {id:'applied',   tint:'#bccfe9', pill:'var(--c-applied)'},
+  {id:'interview', tint:'#f5b9ce', pill:'var(--c-interview)'},
+  {id:'hold',      tint:'#f4dd99', pill:'var(--c-hold)'},
+  {id:'offer',     tint:'#cfc0e9', pill:'var(--c-offer)'},
+  {id:'hired',     tint:'#bfd196', pill:'var(--c-hired)'},
+  {id:'closed',    tint:'#e8cbc6', pill:'var(--c-closed)'}
+];
+const SENT = new Set(['applied','interview','hold','offer','hired','closed']);
+
+const I18N = {
+  pt:{
+    greet:{morning:'Bom dia', afternoon:'Boa tarde', evening:'Boa noite'},
+    lede: (hold, drafted) => hold
+      ? `${hold} ${hold===1?'processo aguardando':'processos aguardando'} retorno · ${drafted} ${drafted===1?'rascunho':'rascunhos'}`
+      : `Tudo em dia · ${drafted} ${drafted===1?'rascunho':'rascunhos'}`,
+    pace:{title:'Ritmo de candidaturas',
+      note:(w,m,peak)=>`média ${w}/semana · ${m}/mês · pico de ${peak} num dia`,
+      heatTitle:'Calendário de candidaturas',
+      dailyTitle:'Candidaturas por dia',
+      weeklyTitle:'Candidaturas por semana',
+      monthsTitle:'Por mês',
+      one:'candidatura', many:'candidaturas',
+      partial:'semana em curso', weekTotal:'semana fechada',
+      avgLine:(v)=>`média de ${v} por dia`,
+      vsAvg:'vs média diária', last7:'Últimos 7 dias', monthSoFar:'até agora', ofTotal:'do total',
+      perDayUnit:'/dia', perWeekUnit:'/semana', soFar:'até agora',
+      empty:'Sem candidaturas enviadas no período.'},
+
+    updated:'Atualizado', insights:'Insights',
+    stats:{sent:'Enviadas', sentSub:'currículos submetidos', interview:'Em entrevista', interviewSub:'conversa marcada',
+      hold:'Aguardando', holdSub:'retorno da empresa', closed:'Encerradas', closedSub:'das enviadas',
+      conv:'Conversão', convSub:(a,s)=>`${a} de ${s} chegaram à 2ª fase`,
+      reply:'Taxa de resposta', replySub:(a,s)=>`${a} de ${s} responderam`},
+    chips:{all:'Todas', drafted:'Rascunhos', applied:'Enviadas', interview:'Entrevista', hold:'Aguardando', closed:'Encerradas'},
+    cols:{drafted:'Rascunhos', applied:'Enviadas', interview:'Entrevista', hold:'Aguardando', offer:'Oferta', hired:'Contratada', closed:'Encerradas'},
+    search:'Buscar empresa ou vaga', empty:'Nada aqui',
+    toast:'Novas candidaturas entram pelo /apply — o board se atualiza sozinho.',
+    applied:'Candidatura', interview:'Entrevista', deadline:'Prazo', channel:'Canal', mode:'Modelo', fit:'Fit', closedOn:'Encerrada',
+    modes:{remote:'Remoto', hybrid:'Híbrido', onsite:'Presencial', unknown:'A confirmar'},
+    sectors:{fintech:'Fintech e pagamentos', ecommerce:'E-commerce e varejo', saas:'SaaS e B2B', ai:'IA e dados',
+      consulting:'Consultoria e staffing', health:'Saúde e indústria', other:'Outros', unknown:'Não pesquisado'},
+    asked:'O que a vaga pedia', adapted:'O que foi adaptado no CV', present:'Como se apresentar',
+    stages:'Etapas', history:'Histórico', positioning:'Posicionamento', showOriginal:'Ver notas originais', context:'Contexto',
+    kinds:{applied:'Candidatura enviada', interview:'Entrevista', process:'Etapa do processo', hold:'Em espera',
+      rejected:'Rejeição', offer:'Oferta', hired:'Contratação', followup:'Follow-up', note:'Atualização'},
+    noPosting:'Posting não arquivado para esta candidatura.',
+    noCV:'Sem CV arquivado. Rode /apply para gerar um com detalhes.',
+    noTalk:'Sem pontos de apresentação registrados. Rode /interview para gerar o prep pack.',
+    noNotes:'Sem notas.', openRole:'Abrir vaga', cvLabel:'CV',
+    charts:{title:'Insights', status:'Por status', sector:'Por setor', channel:'Por canal', funnel:'Funil de candidaturas',
+      applications:'candidaturas', online:'Online', referral:'Indicação', applied:'Enviadas', reply:'Resposta',
+      interview:'Entrevista', offer:'Oferta', hired:'Contratada', others:'Outros', none:'Nenhuma',
+      insightsNote:(s,r)=>`${s} enviadas · ${r} chegaram à 2ª fase`, categories:'categorias', conversion:'conversão'}
+  },
+  en:{
+    greet:{morning:'Good morning', afternoon:'Good afternoon', evening:'Good evening'},
+    lede: (hold, drafted) => hold
+      ? `${hold} ${hold===1?'process waiting':'processes waiting'} on a reply · ${drafted} ${drafted===1?'draft':'drafts'}`
+      : `All caught up · ${drafted} ${drafted===1?'draft':'drafts'}`,
+    pace:{title:'Application pace',
+      note:(w,m,peak)=>`${w}/week average · ${m}/month · peak of ${peak} in a day`,
+      heatTitle:'Application calendar',
+      dailyTitle:'Applications per day',
+      weeklyTitle:'Applications per week',
+      monthsTitle:'By month',
+      one:'application', many:'applications',
+      partial:'current week', weekTotal:'completed week',
+      avgLine:(v)=>`${v} per day average`,
+      vsAvg:'vs daily average', last7:'Past 7 days', monthSoFar:'so far', ofTotal:'of total',
+      perDayUnit:'/day', perWeekUnit:'/week', soFar:'so far',
+      empty:'No applications sent in this period.'},
+
+    updated:'Updated', insights:'Insights',
+    stats:{sent:'Sent', sentSub:'resumes submitted', interview:'Interviewing', interviewSub:'call scheduled',
+      hold:'On hold', holdSub:'waiting on the company', closed:'Closed', closedSub:'of sent',
+      conv:'Conversion', convSub:(a,s)=>`${a} of ${s} reached 2nd phase`,
+      reply:'Reply rate', replySub:(a,s)=>`${a} of ${s} replied`},
+    chips:{all:'All', drafted:'Drafts', applied:'Sent', interview:'Interview', hold:'On hold', closed:'Closed'},
+    cols:{drafted:'Drafts', applied:'Sent', interview:'Interview', hold:'On hold', offer:'Offer', hired:'Hired', closed:'Closed'},
+    search:'Search company or role', empty:'Nothing here',
+    toast:'New applications come in through /apply — the board refreshes itself.',
+    applied:'Applied', interview:'Interview', deadline:'Deadline', channel:'Channel', mode:'Work mode', fit:'Fit', closedOn:'Closed',
+    modes:{remote:'Remote', hybrid:'Hybrid', onsite:'On-site', unknown:'To confirm'},
+    sectors:{fintech:'Fintech & payments', ecommerce:'E-commerce & retail', saas:'SaaS & B2B', ai:'AI & data',
+      consulting:'Consulting & staffing', health:'Health & industry', other:'Other', unknown:'Not researched'},
+    asked:'What the role asked for', adapted:'What I adapted in the CV', present:'How to present yourself',
+    stages:'Stages', history:'History', positioning:'Positioning', showOriginal:'Show original notes', context:'Context',
+    kinds:{applied:'Application sent', interview:'Interview', process:'Process step', hold:'On hold',
+      rejected:'Rejection', offer:'Offer', hired:'Hired', followup:'Follow-up', note:'Update'},
+    noPosting:'No posting archived for this application.',
+    noCV:'No CV archived. Run /apply to generate one with details.',
+    noTalk:'No talking points recorded. Run /interview to build the prep pack.',
+    noNotes:'No notes.', openRole:'Open role', cvLabel:'CV',
+    charts:{title:'Insights', status:'By status', sector:'By sector', channel:'By channel', funnel:'Application funnel',
+      applications:'applications', online:'Online', referral:'Referral', applied:'Applied', reply:'Reply',
+      interview:'Interview', offer:'Offer', hired:'Hired', others:'Others', none:'None',
+      insightsNote:(s,r)=>`${s} sent · ${r} reached 2nd phase`, categories:'categories', conversion:'conversion'}
+  }
+};
+
+let lang = localStorage.getItem('dash-lang') || 'pt';
+const urlLang = new URLSearchParams(location.search).get('lang');
+if(urlLang && I18N[urlLang]) lang = urlLang;
+if(!I18N[lang]) lang = 'pt';
+const t = () => I18N[lang];
+
+let filter = 'all', query = '', currentId = null;
+
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function initials(name){
+  const parts = String(name).replace(/[^A-Za-zÀ-ÿ0-9 ]/g,' ').trim().split(/\s+/);
+  return ((parts[0]||'?')[0] + (parts[1]?parts[1][0]:'')).toUpperCase();
+}
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-').map(Number);
+  if(!y||!m||!d) return iso;
+  if(lang==='en') return `${d} ${MONTHS[m-1]}`;
+  return `${String(d).padStart(2,'0')}/${String(m).padStart(2,'0')}`;
+}
+function modeLabel(mode){ return t().modes[mode] || mode; }
+function humanize(text){
+  const s = text.charAt(0).toUpperCase() + text.slice(1);
+  return s.replace(/([.!?]\s+)([a-zà-ÿ])/g, (m, p, c) => p + c.toUpperCase());
+}
+function sectorLabel(key){ return (t().sectors||{})[key] || key; }
+function roleText(a){ return lang==='en' ? (a.roleEn || a.role) : a.role; }
+
+function counts(){
+  const a = DATA.apps, by = k => a.filter(x=>x.status===k).length;
+  const sent = a.filter(x=>SENT.has(x.status)).length;
+  return {sent, drafted:by('drafted'), applied:by('applied'), interview:by('interview'), hold:by('hold'),
+    offer:by('offer'), hired:by('hired'), closed:by('closed'),
+    reached: a.filter(x=>x.reachedInterview).length,
+    replied: a.filter(x=>x.reachedInterview || x.status==='closed').length};
+}
+
+function greeting(){
+  const h = new Date().getHours();
+  const g = h < 12 ? t().greet.morning : h < 18 ? t().greet.afternoon : t().greet.evening;
+  document.getElementById('greeting').textContent = `${g}${DATA.ownerName ? ', ' + DATA.ownerName : ''} 👋`;
+}
+
+function renderStats(){
+  const c = counts(), s = t().stats;
+  const conv = c.sent ? Math.round(c.reached/c.sent*100) : 0;
+  const reply = c.sent ? Math.round(c.replied/c.sent*100) : 0;
+  const closedPct = c.sent ? Math.round(c.closed/c.sent*100)+'%' : '—';
+  const circ = 2*Math.PI*17, dash = (conv/100)*circ;
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="k">${s.sent}</div><div class="v">${c.sent}</div><div class="sub">${s.sentSub}</div></div>
+    <div class="stat"><div class="k">${s.interview}</div><div class="v">${c.interview}</div><div class="sub">${s.interviewSub}</div></div>
+    <div class="stat"><div class="k">${s.hold}</div><div class="v">${c.hold}</div><div class="sub">${s.holdSub}</div></div>
+    <div class="stat"><div class="k">${s.closed}</div><div class="v">${c.closed}</div><div class="sub">${closedPct} ${s.closedSub}</div></div>
+    <div class="stat conv">
+      <div class="k">${s.conv}</div>
+      <div class="row"><div class="v">${conv}%</div>
+        <svg class="ring" viewBox="0 0 44 44" role="img" aria-label="${s.conv}: ${conv}%">
+          <circle cx="22" cy="22" r="17" fill="none" stroke-width="6" style="stroke:var(--line-soft)"/>
+          <circle cx="22" cy="22" r="17" fill="none" stroke-width="6" stroke-linecap="round" style="stroke:var(--accent)"
+            stroke-dasharray="${dash.toFixed(1)} ${(circ-dash).toFixed(1)}" transform="rotate(-90 22 22)"/>
+        </svg>
+      </div>
+      <div class="sub">${s.convSub(c.reached, c.sent)}</div>
+    </div>
+    <div class="stat"><div class="k">${s.reply}</div><div class="v">${reply}%</div><div class="sub">${s.replySub(c.replied, c.sent)}</div></div>`;
+}
+
+function isoOf(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function dailyDays(){
+  const counts = new Map();
+  DATA.apps.forEach(a=>{
+    if(SENT.has(a.status) && /^\d{4}-\d{2}-\d{2}$/.test(a.date||'')){
+      counts.set(a.date, (counts.get(a.date)||0)+1);
+    }
+  });
+  if(!DATA.startedDate) return [];
+  const start = new Date(DATA.startedDate+'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const out = [];
+  for(let d = new Date(start); d <= today; d.setDate(d.getDate()+1)){
+    const iso = isoOf(d);
+    out.push({iso, date:new Date(d), n:counts.get(iso)||0});
+  }
+  return out;
+}
+
+function weeklySeries(days){
+  const weeks = [];
+  days.forEach(x=>{
+    if(!weeks.length || x.date.getDay() === 1) weeks.push({start:x.iso, end:x.iso, n:0});
+    const w = weeks[weeks.length-1];
+    w.end = x.iso;
+    w.n += x.n;
+  });
+  const todayIso = isoOf(new Date());
+  weeks.forEach((w,i)=>{ w.partial = i === weeks.length-1 && w.end === todayIso && new Date().getDay() !== 0; });
+  return weeks;
+}
+
+function squarify(items, x, y, w, h){
+  const out = [];
+  const totalArea = items.reduce((s,i)=>s+(i.area||0), 0) || 1;
+  const scale = (w*h)/totalArea;
+  let remaining = items.map(i=>({...i, area:(i.area||0)*scale}));
+  let rect = {x, y, w, h};
+  const worst = (row, side)=>{
+    const sum = row.reduce((s,r)=>s+r.area, 0);
+    const thickness = sum/side;
+    let ratio = 0;
+    row.forEach(r=>{
+      const len = r.area/thickness;
+      ratio = Math.max(ratio, Math.max(thickness/len, len/thickness));
+    });
+    return ratio;
+  };
+  while(remaining.length){
+    const side = Math.min(rect.w, rect.h);
+    const row = [remaining[0]];
+    let best = worst(row, side);
+    let i = 1;
+    while(i < remaining.length){
+      const candidate = row.concat(remaining[i]);
+      const candidateWorst = worst(candidate, side);
+      if(candidateWorst > best) break;
+      row.push(remaining[i]);
+      best = candidateWorst;
+      i++;
+    }
+    const area = row.reduce((s,r)=>s+r.area, 0);
+    const thickness = area/side;
+    let offset = 0;
+    row.forEach(r=>{
+      const len = r.area/thickness;
+      if(rect.w >= rect.h){
+        out.push({...r, x: rect.x, y: rect.y + offset, w: thickness, h: len});
+      } else {
+        out.push({...r, x: rect.x + offset, y: rect.y, w: len, h: thickness});
+      }
+      offset += len;
+    });
+    if(rect.w >= rect.h){
+      rect = {x: rect.x + thickness, y: rect.y, w: rect.w - thickness, h: rect.h};
+    } else {
+      rect = {x: rect.x, y: rect.y + thickness, w: rect.w, h: rect.h - thickness};
+    }
+    remaining = remaining.slice(row.length);
+  }
+  return out;
+}
+
+function niceScale(maxVal){  if(!(maxVal > 0)) return {max:1, step:0.5};
+  const rough = maxVal/4;
+  const pow = Math.pow(10, Math.floor(Math.log10(rough)));
+  const norm = rough/pow;
+  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10)*pow;
+  return {max: Math.ceil(maxVal/step)*step, step};
+}
+
+function smoothPath(pts){
+  const n = pts.length;
+  if(n === 0) return '';
+  if(n === 1) return `M${pts[0].x},${pts[0].y}`;
+  const dx = [], m = [];
+  for(let i=0;i<n-1;i++){
+    dx[i] = pts[i+1].x - pts[i].x;
+    m[i] = dx[i] === 0 ? 0 : (pts[i+1].y - pts[i].y)/dx[i];
+  }
+  const t = [m[0]];
+  for(let i=1;i<n-1;i++){
+    if(m[i-1]*m[i] <= 0){ t[i] = 0; }
+    else {
+      const w1 = 2*dx[i] + dx[i-1];
+      const w2 = dx[i] + 2*dx[i-1];
+      t[i] = (w1 + w2)/(w1/m[i-1] + w2/m[i]);
+    }
+  }
+  t[n-1] = m[n-2];
+  let d = `M${pts[0].x},${pts[0].y}`;
+  for(let i=0;i<n-1;i++){
+    const x1 = pts[i].x + dx[i]/3, y1 = pts[i].y + t[i]*dx[i]/3;
+    const x2 = pts[i+1].x - dx[i]/3, y2 = pts[i+1].y - t[i+1]*dx[i]/3;
+    d += ` C${x1.toFixed(2)},${y1.toFixed(2)} ${x2.toFixed(2)},${y2.toFixed(2)} ${pts[i+1].x.toFixed(2)},${pts[i+1].y.toFixed(2)}`;
+  }
+  return d;
+}
+
+function lineChart(el, opts){
+  if(!el) return;
+  const W = Math.max(260, Math.round(el.clientWidth || 420));
+  const H = 208;
+  const pad = {l:36, r:12, t:14, b:28};
+  const plotW = W - pad.l - pad.r;
+  const plotH = H - pad.t - pad.b;
+  const pts = opts.points;
+  const scale = niceScale(Math.max(1, ...pts.map(p=>p.value)));
+  const x = i => pad.l + (pts.length === 1 ? plotW/2 : (i/(pts.length-1))*plotW);
+  const y = v => pad.t + plotH - (v/scale.max)*plotH;
+  const coords = pts.map((p,i)=>({x:x(i), y:y(p.value)}));
+
+  let grid = '';
+  for(let v=0; v<=scale.max + 1e-9; v+=scale.step){
+    const yy = y(v).toFixed(1);
+    grid += `<line class="grid-line" x1="${pad.l}" y1="${yy}" x2="${W-pad.r}" y2="${yy}"/>`;
+    grid += `<text class="axis-text" x="${pad.l-8}" y="${(Number(yy)+3).toFixed(1)}" text-anchor="end">${Number(v.toFixed(2))}</text>`;
+  }
+
+  const xLabels = (opts.xTicks||[]).filter(i=>i>=0 && i<pts.length).map(i=>
+    `<text class="axis-text" x="${x(i).toFixed(1)}" y="${H-8}" text-anchor="middle">${esc(pts[i].short)}</text>`
+  ).join('');
+
+  el.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(opts.aria||'')}">
+      ${grid}
+      <line class="axis-line" x1="${pad.l}" y1="${pad.t+plotH}" x2="${W-pad.r}" y2="${pad.t+plotH}"/>
+      <path class="series" stroke="${opts.color}" d="${smoothPath(coords)}"/>
+      ${xLabels}
+      <line class="hover-line" data-hl x1="0" y1="${pad.t}" x2="0" y2="${pad.t+plotH}" style="opacity:0"/>
+      <circle class="hover-dot" data-hd r="4.5" fill="${opts.color}" cx="0" cy="0" style="opacity:0"/>
+    </svg>
+    <div class="line-tip" data-tip></div>`;
+
+  const svg = el.querySelector('svg');
+  const tip = el.querySelector('[data-tip]');
+  const hl = el.querySelector('[data-hl]');
+  const hd = el.querySelector('[data-hd]');
+
+  svg.addEventListener('pointermove', ev=>{
+    const rect = svg.getBoundingClientRect();
+    const px = ((ev.clientX - rect.left)/rect.width)*W;
+    let idx = Math.round(((px - pad.l)/plotW)*(pts.length - 1));
+    idx = Math.max(0, Math.min(pts.length - 1, idx));
+    const c = coords[idx];
+    hl.setAttribute('x1', c.x.toFixed(1)); hl.setAttribute('x2', c.x.toFixed(1)); hl.style.opacity = 1;
+    hd.setAttribute('cx', c.x.toFixed(1)); hd.setAttribute('cy', c.y.toFixed(1)); hd.style.opacity = 1;
+    tip.innerHTML = opts.tip(pts[idx]);
+    tip.classList.add('on');
+    const left = (c.x/W)*rect.width;
+    const top = (c.y/H)*rect.height;
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    tip.style.left = Math.min(Math.max(4, left - tw/2), Math.max(4, rect.width - tw - 4)) + 'px';
+    tip.style.top = Math.max(2, top - th - 14) + 'px';
+  });
+  svg.addEventListener('pointerleave', ()=>{
+    hl.style.opacity = 0; hd.style.opacity = 0; tip.classList.remove('on');
+  });
+}
+
+function fmtMonthShort(date){
+  return date.toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US', {month:'short'}).replace('.', '');
+}
+
+function heatmapWeeks(days){
+  if(!days.length) return [];
+  const first = new Date(days[0].date);
+  const mondayOffset = (first.getDay() + 6) % 7;
+  const gridStart = new Date(first);
+  gridStart.setDate(gridStart.getDate() - mondayOffset);
+
+  const byIso = new Map(days.map((d, i)=>[d.iso, {d, i}]));
+  const weeks = [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  const cursor = new Date(gridStart);
+  while(cursor <= today){
+    const week = {days: [], label: ''};
+    for(let i=0;i<7;i++){
+      const iso = isoOf(cursor);
+      const hit = byIso.get(iso);
+      week.days.push(hit ? {...hit.d, index:hit.i} : null);
+      cursor.setDate(cursor.getDate()+1);
+    }
+    weeks.push(week);
+  }
+
+  let prevMonth = '';
+  weeks.forEach(w=>{
+    const valid = w.days.filter(Boolean);
+    if(!valid.length) return;
+    const firstOfMonth = valid.find(d=>Number(d.iso.slice(8,10)) === 1);
+    const ref = firstOfMonth || valid[0];
+    const key = ref.iso.slice(0,7);
+    if(key !== prevMonth){
+      w.label = fmtMonthShort(new Date(ref.iso + 'T00:00:00'));
+      prevMonth = key;
+    }
+  });
+  return weeks;
+}
+
+function renderHeatmap(days, avgDay, num){
+  const host = document.getElementById('heatmap');
+  const tip = document.getElementById('hm-tip');
+  const card = host ? host.closest('.hm-card') : null;
+  if(!host || !card) return;
+
+  const weeks = heatmapWeeks(days);
+  if(!weeks.length){ host.innerHTML = ''; return; }
+
+  const gap = 4, labelW = 44;
+  const cardEl = host.closest('.chart-card');
+  const bodyW = (cardEl ? cardEl.clientWidth - 44 : 360);
+  const availableW = Math.max(160, bodyW - labelW - 10);
+  const sq = Math.max(12, Math.min(44, Math.floor((availableW - (weeks.length - 1) * gap) / weeks.length)));
+  host.style.setProperty('--hm-sq', sq + 'px');
+  host.style.setProperty('--hm-gap', gap + 'px');
+  host.style.setProperty('--hm-label', labelW + 'px');
+
+  const maxN = Math.max(1, ...days.map(d=>d.n));
+  const level = n => n === 0 ? 0 : Math.max(1, Math.ceil((n / maxN) * 3));
+
+  const labels = lang === 'pt'
+    ? ['seg.', '', 'qua.', '', 'sex.', '', '']
+    : ['Mon', '', 'Wed', '', 'Fri', '', ''];
+
+  const monthsRow = weeks.map(w=>`<span style="width:${sq}px;flex:0 0 ${sq}px">${w.label ? esc(w.label) : ''}</span>`).join('');
+  const weeksHtml = weeks.map(w=>`<div class="hm-week">${w.days.map(d=>{
+    if(!d) return `<div class="hm-cell void" style="width:${sq}px;height:${sq}px"></div>`;
+    const lv = level(d.n);
+    return `<div class="hm-cell${lv ? ' l' + lv : ''}" style="width:${sq}px;height:${sq}px" data-idx="${d.index}"></div>`;
+  }).join('')}</div>`).join('');
+  const daysRow = labels.map(l=>`<span style="height:${sq}px">${l}</span>`).join('');
+
+  host.innerHTML = `
+    <div class="hm-months" style="gap:${gap}px">${monthsRow}</div>
+    <div class="hm-body">
+      <div class="hm-days" style="gap:${gap}px">${daysRow}</div>
+      <div class="hm-weeks" style="gap:${gap}px">${weeksHtml}</div>
+    </div>`;
+
+  const showTip = (cell)=>{
+    const idx = Number(cell.dataset.idx);
+    const day = days[idx];
+    if(!day) return;
+    const past7 = days.slice(Math.max(0, idx - 6), idx + 1).reduce((s,d)=>s+d.n, 0);
+    const monthStartIso = day.iso.slice(0,7) + '-01';
+    const monthSoFar = days.filter(d=>d.iso >= monthStartIso && d.iso <= day.iso).reduce((s,d)=>s+d.n, 0);
+    const diff = day.n - avgDay;
+    const diffLabel = (diff > 0 ? '+' : '') + num(diff, 1);
+    const monthName = new Date(day.iso + 'T00:00:00').toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US', {month:'long'});
+    const monthCap = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+    const dayLabel = new Date(day.iso + 'T00:00:00').toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US', {weekday:'long', day:'numeric', month:'long'});
+    const p = t().pace;
+
+    tip.innerHTML = `
+      <div class="t">${esc(dayLabel)}</div>
+      <div class="big">${num(day.n,0)} ${day.n === 1 ? p.one : p.many}</div>
+      <div class="kv"><span>${p.vsAvg}</span><b class="${diff > 0 ? 'up' : ''}">${esc(diffLabel)}</b></div>
+      <div class="kv"><span>${p.last7}</span><b>${num(past7,0)}</b></div>
+      <div class="kv"><span>${esc(monthCap)} ${p.monthSoFar}</span><b>${num(monthSoFar,0)}</b></div>`;
+    tip.classList.add('on');
+
+    const cr = card.getBoundingClientRect();
+    const r = cell.getBoundingClientRect();
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    tip.style.left = Math.min(Math.max(0, r.left - cr.left - 4), cr.width - tw - 4) + 'px';
+    tip.style.top = Math.max(0, r.top - cr.top - th - 10) + 'px';
+  };
+
+  host.querySelectorAll('.hm-cell[data-idx]').forEach(cell=>{
+    cell.addEventListener('pointerenter', ()=>showTip(cell));
+    cell.addEventListener('pointermove', ()=>showTip(cell));
+    cell.addEventListener('pointerleave', ()=>tip.classList.remove('on'));
+  });
+}
+
+function renderMonths(days, num){
+  const host = document.getElementById('months');
+  if(!host) return;
+  const p = t().pace;
+  const months = new Map();
+  days.forEach(d=>{
+    const key = d.iso.slice(0,7);
+    const m = months.get(key) || {key, n:0, days:0};
+    m.n += d.n; m.days += 1;
+    months.set(key, m);
+  });
+  const list = [...months.values()].sort((a,b)=>a.key.localeCompare(b.key));
+  const max = Math.max(1, ...list.map(m=>m.n));
+  const currentKey = isoOf(new Date()).slice(0,7);
+
+  host.innerHTML = list.map(m=>{
+    const date = new Date(m.key + '-01T00:00:00');
+    const label = date.toLocaleDateString(lang === 'pt' ? 'pt-BR' : 'en-US', {month:'long'});
+    const labelCap = label.charAt(0).toUpperCase() + label.slice(1);
+    const width = Math.round((m.n / max) * 100);
+    const sub = `${num(m.n/m.days, 2)}${p.perDayUnit} · ${num(m.n/(m.days/7), 1)}${p.perWeekUnit}${m.key === currentKey ? ' ' + p.soFar : ''}`;
+    return `<div class="month-row">
+      <div class="month-main">
+        <span class="month-name">${esc(labelCap)}</span>
+        <span class="month-track"><span class="month-fill" style="width:${width}%"></span></span>
+        <span class="month-n">${m.n}</span>
+      </div>
+      <div class="month-sub">${esc(sub)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderPace(){
+  const d = t().pace;
+  const titleEl = document.getElementById('pace-title');
+  if(!titleEl) return;
+  titleEl.textContent = d.title;
+  document.getElementById('c-heat').textContent = d.heatTitle;
+  document.getElementById('c-daily').textContent = d.dailyTitle;
+  document.getElementById('c-weekly').textContent = d.weeklyTitle;
+  document.getElementById('c-months').textContent = d.monthsTitle;
+
+  const days = dailyDays();
+  const locale = lang === 'pt' ? 'pt-BR' : 'en-US';
+  const num = (value, digits)=>value.toLocaleString(locale, {minimumFractionDigits:digits, maximumFractionDigits:digits});
+  const noteEl = document.getElementById('pace-note');
+
+  if(!days.length){
+    noteEl.textContent = '';
+    document.getElementById('heatmap').innerHTML = `<div class="chart-empty">${esc(d.empty)}</div>`;
+    document.getElementById('chart-daily').innerHTML = '';
+    document.getElementById('chart-weekly').innerHTML = '';
+    document.getElementById('months').innerHTML = '';
+    return;
+  }
+
+  const total = days.reduce((sum,x)=>sum+x.n,0);
+  const peak = Math.max(...days.map(x=>x.n));
+  const avgDay = total/days.length;
+  const avgWeek = total/(days.length/7);
+  const avgMonth = total/(days.length/30.44);
+  noteEl.textContent = d.note(num(avgWeek,1), num(avgMonth,1), peak);
+
+  renderHeatmap(days, avgDay, num);
+
+  const fmt = iso => new Date(iso+'T00:00:00').toLocaleDateString(locale, {day:'2-digit', month:'short'}).replace(' de ', ' ');
+  const fmtLong = iso => new Date(iso+'T00:00:00').toLocaleDateString(locale, {weekday:'long', day:'numeric', month:'short', year:'numeric'});
+
+  const dailyTicks = [];
+  const tickCount = Math.min(6, days.length);
+  for(let k=0;k<tickCount;k++){
+    dailyTicks.push(Math.round(k*(days.length-1)/(tickCount-1)));
+  }
+  const dailyTicksUniq = [...new Set(dailyTicks)].sort((a,b)=>a-b);
+  const dailyPoints = days.map(x=>({value:x.n, short:fmt(x.iso), day:fmtLong(x.iso)}));
+  lineChart(document.getElementById('chart-daily'), {
+    points: dailyPoints,
+    color: '#5f7ba8',
+    xTicks: dailyTicksUniq,
+    aria: `${d.dailyTitle}: ${num(total,0)} ${d.many}`,
+    tip: p => `<div class="t">${esc(p.day)}</div>
+      <div class="row"><i style="background:#5f7ba8"></i>${num(p.value,0)} ${p.value === 1 ? d.one : d.many}</div>
+      <div class="x">${d.avgLine(num(avgWeek/7, 2))}</div>`,
+  });
+
+  const weeks = weeklySeries(days);
+  const weekPoints = weeks.map(w=>({value:w.n, short:fmt(w.start), range:`${fmt(w.start)} – ${fmt(w.end)}`, partial:w.partial}));
+  const weekTicks = weeks.map((_,i)=>i).filter(i=>weeks.length <= 6 || i % 2 === 0 || i === weeks.length-1);
+  lineChart(document.getElementById('chart-weekly'), {
+    points: weekPoints,
+    color: '#7f9a52',
+    xTicks: weekTicks,
+    aria: `${d.weeklyTitle}: ${num(total,0)} ${d.many}`,
+    tip: p => `<div class="t">${esc(p.range)}</div>
+      <div class="row"><i style="background:#7f9a52"></i>${num(p.value,0)} ${p.value === 1 ? d.one : d.many}</div>
+      <div class="x">${p.partial ? d.partial : d.weekTotal}</div>`,
+  });
+
+  renderMonths(days, num);
+}
+
+let paceResizeTimer = null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(paceResizeTimer);
+  paceResizeTimer = setTimeout(renderPace, 160);
+});
+
+
+
+function renderChips(){
+  const c = counts(), labels = t().chips;
+  const items = [['all',labels.all,DATA.apps.length],['drafted',labels.drafted,c.drafted],
+    ['applied',labels.applied,c.applied],['interview',labels.interview,c.interview],
+    ['hold',labels.hold,c.hold],['closed',labels.closed,c.closed]];
+  document.getElementById('chips').innerHTML = items.map(([id,label,n])=>`
+    <button class="chip ${filter===id?'active':''}" data-filter="${id}">${esc(label)} <span class="n">${n}</span></button>`).join('');
+  document.querySelectorAll('.chip').forEach(el=>{
+    el.addEventListener('click',()=>{ filter = el.dataset.filter; renderChips(); renderBoard(); });
+  });
+}
+
+function card(a){
+  const short = a.company.length > 24 ? a.company.slice(0,23)+'…' : a.company;
+  const tags = [];
+  if(a.workMode) tags.push(`<span class="tag mode ${esc(a.workMode)}">${esc(modeLabel(a.workMode))}</span>`);
+  const skillList = (lang==='en' && (a.skillsEn||[]).length) ? a.skillsEn : (a.skills||[]);
+  skillList.slice(0,3).forEach(s=>tags.push(`<span class="tag">${esc(s)}</span>`));
+
+  let meta = `<div class="meta-line"><span class="meta-k">${t().applied}</span><span class="meta-v">${fmtDate(a.date)}</span></div>`;
+  if(a.interviewDate) meta += `<div class="meta-line"><span class="meta-k">${t().interview}</span><span class="meta-v">${fmtDate(a.interviewDate)}</span></div>`;
+  if(a.deadline) meta += `<div class="meta-line"><span class="meta-k">${t().deadline}</span><span class="meta-v">${fmtDate(a.deadline)}</span></div>`;
+  if(a.status==='closed' && a.resolved) meta += `<div class="meta-line warn"><span class="meta-k">${t().closedOn}</span><span class="meta-v">${fmtDate(a.resolved)}</span></div>`;
+
+  return `<article class="card" tabindex="0" role="button" aria-label="${esc(a.company)} — ${esc(roleText(a))}" data-id="${esc(a.id)}" style="--tint:${a.tint||'#eee4d1'}">
+    <div class="card-top">
+      <div class="avatar">${esc(initials(a.company))}</div>
+      <div class="card-t">
+        <div class="card-company" title="${esc(a.company)}">${esc(short)}</div>
+        <div class="card-role">${esc(roleText(a))}</div>
+      </div>
+    </div>
+    <div class="meta">${meta}</div>
+    ${tags.length?`<div class="tags">${tags.join('')}</div>`:''}
+  </article>`;
+}
+
+function renderBoard(){
+  const q = query.toLowerCase();
+  const board = document.getElementById('board');
+  board.innerHTML = COLUMNS.map(col=>{
+    const items = DATA.apps.filter(a=>{
+      if(a.status!==col.id) return false;
+      if(filter!=='all' && a.status!==filter) return false;
+      if(q && !(a.company+' '+roleText(a)).toLowerCase().includes(q)) return false;
+      return true;
+    }).sort((x,y)=> (y.date||'').localeCompare(x.date||''));
+    return `<section class="col">
+      <div class="col-head">
+        <span class="pill" style="--pill-bg:${col.pill}">${esc(t().cols[col.id])}</span>
+        <span class="col-count">${items.length}</span><span class="grow"></span>
+        <button class="plus" title="+">+</button>
+      </div>
+      <div class="cards">${items.length?items.map(a=>card({...a, tint:col.tint})).join(''):`<div class="empty-col">${esc(t().empty)}</div>`}</div>
+    </section>`;
+  }).join('');
+
+  board.querySelectorAll('.card').forEach(el=>{
+    el.addEventListener('click',()=>openDrawer(el.dataset.id));
+    el.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openDrawer(el.dataset.id);} });
+  });
+  board.querySelectorAll('.plus').forEach(el=>el.addEventListener('click',()=>toast(t().toast)));
+}
+
+function toast(message){
+  const el = document.getElementById('toast');
+  el.textContent = message; el.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(()=>el.classList.remove('show'), 2800);
+}
+
+function section(title, body, count){
+  return `<section class="sec"><h3>${esc(title)}${count!=null?` <span class="count">${count}</span>`:''}</h3>${body}</section>`;
+}
+
+function openDrawer(id){
+  const a = DATA.apps.find(x=>x.id===id);
+  if(!a) return;
+  currentId = id;
+  const col = COLUMNS.find(c=>c.id===a.status) || COLUMNS[0];
+
+  document.getElementById('d-avatar').textContent = initials(a.company);
+  document.getElementById('d-avatar').style.background = col.tint;
+  document.getElementById('d-title').textContent = roleText(a);
+  document.getElementById('d-co').textContent = a.company + (a.sectorKey ? ` · ${sectorLabel(a.sectorKey)}` : '');
+
+  const facts = [
+    [t().applied, fmtDate(a.date)], [t().interview, a.interviewDate?fmtDate(a.interviewDate):'—'],
+    [t().deadline, a.deadline?fmtDate(a.deadline):'—'], [t().channel, a.channelKey==='online'?t().charts.online:(a.channel||'—')],
+    [t().mode, a.workMode?modeLabel(a.workMode):'—'], [t().fit, a.fit?`${a.fit}/100`:'—']
+  ].map(([k,v])=>`<div class="fact"><div class="k">${esc(k)}</div><div class="v">${esc(v)}</div></div>`).join('');
+
+  let body = `<div class="status-row"><span class="pill" style="--pill-bg:${col.pill}">${esc(t().cols[a.status])}</span></div>
+    <div class="facts">${facts}</div>`;
+
+  const reqs = (lang==='en' && (a.requirementsEn||[]).length) ? a.requirementsEn : (a.requirements||[]);
+  body += section(t().asked, reqs.length
+    ? `<ul class="pretty">${reqs.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>`
+    : (a.postingSummary ? `<p style="font-size:13px;line-height:1.55;color:#4a443b;margin:0">${esc(a.postingSummary)}</p>`
+        : `<div class="empty">${esc(t().noPosting)}</div>`), reqs.length||null);
+
+  const adapt = (lang==='en' && (a.adaptationsEn||[]).length) ? a.adaptationsEn : (a.adaptations||[]);
+  const cvSub = (lang==='en' && a.cvSubtitleEn) ? a.cvSubtitleEn : a.cvSubtitle;
+  body += section(t().adapted,
+    (cvSub?`<div class="quote"><strong>${esc(t().positioning)}:</strong> ${esc(cvSub)}</div>`:'') +
+    (adapt.length?`<ul class="pretty">${adapt.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'') +
+    (!adapt.length && !cvSub?`<div class="empty">${esc(t().noCV)}</div>`:''), adapt.length||null);
+
+  const talk = (lang==='en' && (a.talkingPointsEn||[]).length) ? a.talkingPointsEn : (a.talkingPoints||[]);
+  body += section(t().present, talk.length
+    ? `<ol class="talk">${talk.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>`
+    : `<div class="empty">${esc(t().noTalk)}</div>`, talk.length||null);
+
+  if(a.stages && a.stages.length){
+    const lastDone = a.stages.filter(s=>s.done).length;
+    body += section(t().stages, `<div class="stages">${a.stages.map((s,i)=>`
+      <span class="stage ${s.done?'done':(i===lastDone?'now':'')}">${s.done?'✓ ':''}${esc(s.label)}</span>`).join('')}</div>`);
+  }
+
+  const timeline = (a.history||[]);
+  const context = (a.context||[]);
+  let historyBlock;
+  if(!timeline.length && !context.length){
+    historyBlock = `<div class="empty">${esc(t().noNotes)}</div>`;
+  } else {
+    const events = timeline.map(e=>`
+      <li class="tl-item tl-${esc(e.kind)}">
+        <span class="tl-dot"></span>
+        <span class="tl-date">${e.date?fmtDate(e.date):'—'}</span>
+        <span class="tl-body">
+          <b>${esc((t().kinds||{})[e.kind] || t().kinds.note)}</b>
+          ${e.text?`<p>${esc(humanize(e.text))}</p>`:''}
+        </span>
+      </li>`).join('');
+    historyBlock = (timeline.length?`<ol class="timeline">${events}</ol>`:'') +
+      (context.length?`<details class="ctx"><summary>${esc(t().context)} (${context.length})</summary>
+        <ul class="pretty">${context.map(c=>`<li>${esc(humanize(c))}</li>`).join('')}</ul></details>`:'');
+  }
+  body += section(t().history, historyBlock, timeline.length||null);
+
+  const links = [];
+  if(a.source && /^https?:/.test(a.source)) links.push(`<a class="btn-link" href="${esc(a.source)}" target="_blank" rel="noopener">${esc(t().openRole)} ↗</a>`);
+  if(a.cvFile) links.push(`<span class="btn-link">${esc(t().cvLabel)}: ${esc(a.cvFile.split('/').pop())}</span>`);
+  if(links.length) body += `<div class="link-row">${links.join('')}</div>`;
+
+  document.getElementById('d-body').innerHTML = body;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('scrim').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  try{ history.replaceState(null,'','#'+id); }catch(e){}
+  document.getElementById('drawer').focus();
+}
+
+function closeDrawer(){
+  currentId = null;
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('scrim').classList.remove('open');
+  document.body.style.overflow = '';
+  try{ history.replaceState(null,'',location.pathname); }catch(e){}
+}
+
+/* ---------- charts ---------- */
+function chartEmpty(){ return `<div class="chart-empty">${esc(t().charts.none)}</div>`; }
+
+function hexToRgb(hex){
+  const h = hex.replace('#','');
+  const full = h.length===3 ? h.split('').map(c=>c+c).join('') : h;
+  return [parseInt(full.slice(0,2),16), parseInt(full.slice(2,4),16), parseInt(full.slice(4,6),16)];
+}
+function mix(a,b,t){
+  const A = hexToRgb(a), B = hexToRgb(b);
+  const c = A.map((v,i)=>Math.round(v+(B[i]-v)*t));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+const TONE_LIGHT = '#fbf4e6';
+/* rank 0 is the largest value and gets the full hue; smaller values fade toward cream */
+function tone(base, rank, n){
+  const t = n <= 1 ? 1 : 1 - (rank/(n-1))*0.68;
+  return mix(TONE_LIGHT, base, t);
+}
+
+function renderCharts(){
+  const c = counts(), ch = t().charts, cols = t().cols;
+  document.getElementById('insights-title').textContent = ch.title;
+  document.getElementById('insights-note').textContent = ch.insightsNote(c.sent, c.reached);
+  document.getElementById('c-status').textContent = ch.status;
+  document.getElementById('c-sector').textContent = ch.sector;
+  document.getElementById('c-channel').textContent = ch.channel;
+  document.getElementById('c-funnel').textContent = ch.funnel;
+
+  /* ---------- status: ring, blues by volume ---------- */
+  const slices = [
+    {label:cols.applied,   value:c.applied},
+    {label:cols.closed,    value:c.closed},
+    {label:cols.drafted,   value:c.drafted},
+    {label:cols.hold,      value:c.hold},
+    {label:cols.interview, value:c.interview},
+    {label:cols.offer,     value:c.offer},
+    {label:cols.hired,     value:c.hired}
+  ].filter(s=>s.value>0).sort((a,b)=>b.value-a.value);
+  const total = slices.reduce((n,s)=>n+s.value,0);
+  document.getElementById('n-status').textContent = `${total} ${ch.applications}`;
+
+  if(!total){
+    document.getElementById('chart-status').innerHTML = chartEmpty();
+  } else {
+    const tones = ['#43648f','#5b7aa6','#7d95b8','#a3b4c9','#c2d0e4'];
+
+    const items = slices.map((s,i)=>({
+      label: s.label,
+      value: s.value,
+      area: s.value,
+      pct: Math.round(s.value/total*100),
+      color: tones[Math.min(i, tones.length-1)],
+      dark: i < 2,
+    }));
+
+    const rects = squarify(items, 0, 0, 100, 100);
+    const boxW = Math.max(260, document.getElementById('chart-status').clientWidth || 420);
+    const boxH = window.innerWidth <= 680 ? 220 : 260;
+    const cells = rects.map(r=>{
+      const pxW = (r.w/100)*boxW, pxH = (r.h/100)*boxH;
+      const cls = (pxH < 26 || pxW < 56) ? 'xs' : (pxH < 58 || pxW < 90 ? 'tight' : '');
+      return `<div class="tm-cell ${cls}${r.dark ? ' on-dark' : ''}"
+        data-label="${esc(r.label)}" data-value="${r.value}" data-pct="${r.pct}"
+        style="left:${r.x.toFixed(2)}%;top:${r.y.toFixed(2)}%;width:${r.w.toFixed(2)}%;height:${r.h.toFixed(2)}%;background:${r.color}">
+        <span class="tm-name">${esc(r.label)}</span>
+        <span class="tm-pct">${r.pct}%</span>
+      </div>`;
+    }).join('');
+
+    const statusHost = document.getElementById('chart-status');
+    statusHost.innerHTML = `
+      <div class="treemap" role="img" aria-label="${esc(ch.status)}: ${total} ${esc(ch.applications)}">${cells}</div>
+      <div class="line-tip tm-tip" id="tm-tip"></div>`;
+
+    const tip = document.getElementById('tm-tip');
+    const unit = v => v === 1 ? t().pace.one : t().pace.many;
+    statusHost.querySelectorAll('.tm-cell').forEach(cell=>{
+      cell.addEventListener('pointerenter', ()=>{
+        const box = statusHost.getBoundingClientRect();
+        const r = cell.getBoundingClientRect();
+        tip.innerHTML = `<div class="t">${esc(cell.dataset.label)}</div>
+          <div class="row">${cell.dataset.value} ${unit(Number(cell.dataset.value))}</div>
+          <div class="x">${cell.dataset.pct}% ${t().pace.ofTotal}</div>`;
+        tip.classList.add('on');
+        const tw = tip.offsetWidth, th = tip.offsetHeight;
+        tip.style.left = Math.min(Math.max(0, r.left - box.left + r.width/2 - tw/2), Math.max(0, box.width - tw - 4)) + 'px';
+        tip.style.top = Math.max(0, r.top - box.top - th - 8) + 'px';
+      });
+      cell.addEventListener('pointerleave', ()=>tip.classList.remove('on'));
+    });
+  }
+
+  /* ---------- sector: ranked bars, greens by volume ---------- */
+  const sectorBase = '#687f3b';
+  const sectorCounts = {};
+  DATA.apps.forEach(a=>{
+    const k = !a.sectorKey || a.sectorKey==='unknown' ? 'other' : a.sectorKey;
+    sectorCounts[k] = (sectorCounts[k]||0) + 1;
+  });
+  const sectorRows = Object.entries(sectorCounts)
+    .map(([k,v])=>({label:sectorLabel(k), value:v}))
+    .sort((a,b)=>b.value-a.value || a.label.localeCompare(b.label));
+  const sectorMax = Math.max(1, ...sectorRows.map(r=>r.value));
+  document.getElementById('n-sector').textContent = `${sectorRows.length} ${ch.categories}`;
+  document.getElementById('chart-sector').innerHTML = sectorRows.length
+    ? `<div class="sector-list">${sectorRows.map((r,i)=>`
+        <div class="sector-row">
+          <span class="sector-k" title="${esc(r.label)}">${esc(r.label)}</span>
+          <span class="sector-bar" style="--tone:${tone(sectorBase,i,sectorRows.length)};--w:${(r.value/sectorMax*100).toFixed(1)}%"></span>
+          <span class="sector-v">${r.value}</span>
+        </div>`).join('')}</div>`
+    : chartEmpty();
+
+  /* ---------- channel: one number, one purple ---------- */
+  const channelBase = '#775ca6';
+  const online = c.sent;
+  const referral = 0;
+  const share = online + referral ? Math.round(online/(online+referral)*100) : 0;
+  document.getElementById('n-channel').textContent = `${online} ${ch.applications}`;
+  document.getElementById('chart-channel').innerHTML = `
+    <div class="channel-body">
+      <div class="channel-num"><b>${share}%</b><span>${esc(ch.online)}</span></div>
+      <div class="channel-bar" style="width:${share}%"></div>
+      <div class="channel-tiles">
+        <div class="ctile"><span>${esc(ch.online)}</span><b>${online}</b></div>
+        <div class="ctile dim"><span>${esc(ch.referral)}</span><b>${referral}</b></div>
+      </div>
+    </div>`;
+
+  /* ---------- funnel: widening stages, pinks by volume ---------- */
+  const funnelBase = '#bc5c82';
+  const stages = [
+    {label:ch.applied,   value:c.sent},
+    {label:ch.reply,     value:c.replied},
+    {label:ch.interview, value:c.reached},
+    {label:ch.offer,     value:c.offer},
+    {label:ch.hired,     value:c.hired}
+  ];
+  document.getElementById('n-funnel').textContent = `${ch.conversion} ${c.sent ? Math.round(c.reached/c.sent*100) : 0}%`;
+  document.getElementById('chart-funnel').innerHTML = c.sent
+    ? `<div class="funnel">${stages.map((s,i)=>`
+        <div class="funnel-row">
+          <span class="funnel-k">${esc(s.label)}</span>
+          <span class="funnel-track">
+            <span class="funnel-bar" style="--tone:${tone(funnelBase,i,stages.length)};width:calc((100% - 46px) * ${(s.value/c.sent).toFixed(4)})"></span>
+            <span class="funnel-n">${s.value}</span>
+          </span>
+          <span class="funnel-v">${Math.round(s.value/c.sent*100)}%</span>
+        </div>`).join('')}</div>`
+    : chartEmpty();
+
+  const mark = (id, label)=>{
+    const el = document.getElementById(id);
+    el.setAttribute('role','img');
+    el.setAttribute('aria-label', label);
+  };
+  mark('chart-status', `${ch.status}: ${total} ${ch.applications}`);
+  mark('chart-sector', `${ch.sector}: ${sectorRows.map(r=>`${r.label} ${r.value}`).join(', ')}`);
+  mark('chart-channel', `${ch.channel}: ${online} ${ch.online}, ${referral} ${ch.referral}`);
+  mark('chart-funnel', `${ch.funnel}: ${stages.map(s=>`${s.label} ${s.value}`).join(', ')}`);
+}
+
+function applyLanguage(){
+  document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+  document.querySelectorAll('.lang button').forEach(b=>b.classList.toggle('on', b.dataset.lang===lang));
+  document.getElementById('q').placeholder = t().search;
+  const generatedAt = new Date(DATA.generated);
+  const stamp = isNaN(generatedAt) ? (DATA.generatedLabel || '') : generatedAt.toLocaleString(
+    lang === 'pt' ? 'pt-BR' : 'en-US',
+    {day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit'}
+  );
+  document.getElementById('updated').textContent = `${t().updated} ${stamp}`;
+  greeting();
+  const boardNote = document.getElementById('board-note');
+  if(boardNote) boardNote.textContent = `${DATA.apps.length} ${lang === 'pt' ? 'candidaturas' : 'applications'}`;
+  renderStats(); renderPace(); renderChips(); renderBoard(); renderCharts();
+  if(currentId) openDrawer(currentId);
+}
+
+document.querySelectorAll('.lang button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    lang = b.dataset.lang;
+    localStorage.setItem('dash-lang', lang);
+    applyLanguage();
+  });
+});
+
+document.getElementById('d-close').addEventListener('click',closeDrawer);
+document.getElementById('scrim').addEventListener('click',closeDrawer);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+document.getElementById('q').addEventListener('input',e=>{ query = e.target.value; renderBoard(); });
+
+applyLanguage();
+
+const deepLink = location.hash.replace('#','');
+if(/^app-\d+$/.test(deepLink)) openDrawer(deepLink);
+</script>
+</body>
+</html>
