@@ -612,11 +612,14 @@ def build() -> dict:
 
     config_path = ROOT / "dashboard.config.json"
     owner_name = ""
+    default_lang = "en"
     if config_path.is_file():
         try:
-            owner_name = (json.loads(config_path.read_text(encoding="utf-8")) or {}).get("ownerName", "") or ""
+            config = json.loads(config_path.read_text(encoding="utf-8")) or {}
+            owner_name = config.get("ownerName", "") or ""
+            default_lang = (config.get("defaultLang") or default_lang)
         except (ValueError, OSError):
-            owner_name = ""
+            pass
 
     now = datetime.now()
     started_dates = []
@@ -632,6 +635,7 @@ def build() -> dict:
 
     return {
         "ownerName": owner_name.strip(),
+        "defaultLang": "pt" if str(default_lang).lower().startswith("pt") else "en",
         "generated": now.isoformat(timespec="seconds"),
         "generatedLabel": now.strftime("%d/%m/%Y às %H:%M"),
         "startedDate": started.strftime("%Y-%m-%d") if started else "",
@@ -679,7 +683,7 @@ def main(argv=None) -> None:
         shown = OUTPUT.relative_to(ROOT)
     except ValueError:
         shown = OUTPUT
-    print(f"dashboard: {shown} ({len(data['apps'])} aplicações · {summary})")
+    print(f"dashboard: {shown} ({len(data['apps'])} applications · {summary})")
 
 
 if __name__ == "__main__":

@@ -48,6 +48,8 @@ open reports/dashboard.html        # macOS
 
 Requirements: Python 3.9 or newer. Standard library only, nothing to install.
 
+If an AI agent is doing the setup, point it at [AGENTS.md](AGENTS.md): it carries the decision tree for missing data and the rules for reporting back.
+
 Rebuild after every application, every status change, and every new CV. The output is generated; never edit `reports/dashboard.html` by hand.
 
 ## What it reads

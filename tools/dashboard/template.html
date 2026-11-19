@@ -693,7 +693,7 @@ const I18N = {
   }
 };
 
-let lang = localStorage.getItem('dash-lang') || 'pt';
+let lang = localStorage.getItem('dash-lang') || DATA.defaultLang || 'en';
 const urlLang = new URLSearchParams(location.search).get('lang');
 if(urlLang && I18N[urlLang]) lang = urlLang;
 if(!I18N[lang]) lang = 'pt';
