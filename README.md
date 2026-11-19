@@ -90,11 +90,11 @@ Drop a `dashboard.json` next to an application to override what the build infers
 ## Configuration
 
 - `dashboard.config.json` at the repo root, optional: `{"ownerName": "Your Name"}` puts your name in the greeting.
-- `--root` builds against another folder. That is how `demo/` is built from `sample/`.
+- `--root` builds against another folder. That is how `docs/index.html` is built from `sample/`.
 - `--out` writes the HTML somewhere else.
 
 ```bash
-python3 tools/dashboard/build.py --root sample --out demo/index.html
+python3 tools/dashboard/build.py --root sample --out docs/index.html
 ```
 
 ## Privacy
@@ -110,7 +110,7 @@ Keep these out of git when you run this for real:
 /dashboard.config.json
 ```
 
-The demo in this repository is generated from fictional companies and fictional applications. No personal data is committed here.
+The demo in `docs/` is generated from fictional companies and fictional applications. No personal data is committed here.
 
 ## Customising
 
