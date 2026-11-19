@@ -395,13 +395,16 @@ def _classify_event(text: str) -> str:
         return "hired"
     if re.search(r"\boffer\b|oferta", low):
         return "offer"
-    if re.search(r"rejected|rejei|recusad|role closed|not moving forward", low):
+    if re.search(r"rejected|rejei|recusad|role closed|not moving forward|cancelled the role|"
+                 r"pursue other candidates|closed the role", low):
         return "rejected"
     if re.search(r"on[ _]hold|moved to on_hold|aguardando|talent pool|hold until", low):
         return "hold"
     if re.search(r"interview|entrevista|first chat|papo|conversa|chat with", low):
         return "interview"
     if re.search(r"screening|triagem|task round|questionnaire|questionário|certifica", low):
+        return "process"
+    if re.search(r"approved|approval|aprovad|stamp of approval", low):
         return "process"
     if re.search(r"follow.?up", low):
         return "followup"
@@ -416,35 +419,94 @@ BARE_EVENT_TEXT = {"applied", "application sent", "application submitted", "reje
                    "interview", "offer", "hired", "on hold", "em espera"}
 
 
+def _split_sentences(text: str) -> list[str]:
+    return [part.strip() for part in re.split(r"(?<=[.!?])\s+", text) if part.strip()]
+
+
+STOP_WORDS = {
+    "the", "a", "an", "and", "or", "of", "to", "in", "on", "for", "with", "at", "by",
+    "from", "is", "was", "were", "be", "been", "that", "this", "these", "those", "they",
+    "their", "them", "she", "he", "we", "our", "it", "its", "as", "but", "has", "have",
+    "had", "did", "do", "does", "very", "also", "just", "there", "then", "than",
+}
+
+
+def _content_tokens(text: str) -> set[str]:
+    return {token for token in re.findall(r"[a-z0-9]+", text.lower())
+            if token not in STOP_WORDS and len(token) > 1}
+
+
+def _similar_notes(first: str, second: str) -> bool:
+    """True when two note sentences record the same fact in different words.
+
+    The tracker and `outcome.md` both narrate the process, so the same fact
+    usually arrives twice, reworded and re-punctuated. Exact matching misses
+    that; comparing content words catches it without merging genuinely
+    different sentences (two interviews on different dates stay separate,
+    because callers only compare notes whose dates agree).
+    """
+    first_tokens, second_tokens = _content_tokens(first), _content_tokens(second)
+    if not first_tokens or not second_tokens:
+        return False
+    shared = len(first_tokens & second_tokens)
+    if shared < 2:
+        return False
+    if shared / min(len(first_tokens), len(second_tokens)) >= 0.66:
+        return True
+    return SequenceMatcher(None, " ".join(sorted(first_tokens)),
+                           " ".join(sorted(second_tokens))).ratio() >= 0.85
+
+
 def parse_history(tracker_notes: str, outcome_notes: str, applied_date: str = "") -> tuple[list[dict], list[str]]:
     """Turn the raw note blobs into dated timeline events plus undated context.
 
     Both sources are read; events need a date to enter the timeline, everything
-    else becomes scannable context (fit, gaps, tailoring decisions).
+    else becomes scannable context (fit, gaps, tailoring decisions). Sentences
+    already told by the other source are skipped, so the drawer never repeats a
+    fact because the tracker and the archive both recorded it.
     """
     events: list[dict] = []
     context: list[str] = []
+    seen: list[tuple[str, str]] = []
+
+    def already_known(text: str, date: str | None) -> bool:
+        for other, other_date in seen:
+            if date and other_date and date != other_date:
+                continue
+            if _similar_notes(text, other):
+                return True
+        return False
 
     for raw in (outcome_notes, tracker_notes):
         for part in _note_segments(raw):
             match = re.search(r"\d{4}-\d{2}-\d{2}", part)
-            date = match.group(0) if match else None
-            text = part
-            if match:
-                text = part[: match.start()] + " " + part[match.end():]
-            text = re.sub(r"\b\d{4}-\d{2}-\d{2}\b", " ", text)
-            text = _clean_note_text(text)
-            if len(text) < 3:
-                continue
-            kind = _classify_event(text)
-            if text.lower().strip(" .") in BARE_EVENT_TEXT:
-                text = ""
-            anchored = bool(match) and (match.start() <= 40 or len(part) <= 120)
-            if date and anchored and kind != "note":
-                events.append({"date": date, "kind": kind, "text": text[:260]})
-            elif 12 <= len(text) <= 220 and "?" not in text and not re.match(r"^(posting|source)\b", text, re.I) \
-                    and not re.search(r"documents/applications|https?://|cv/main|cover_letters", text):
+            anchored = bool(match) and match.start() <= 25
+            date = match.group(0) if anchored else None
+            body = part[: match.start()] + " " + part[match.end():] if anchored else part
+            for index, sentence in enumerate(_split_sentences(body)):
+                text = _clean_note_text(sentence)
+                if text.lower().strip(" .") in BARE_EVENT_TEXT:
+                    text = ""
+                if not text:
+                    continue
+                # Only the sentence the date was attached to carries it; a trailing
+                # date inside prose ("under way by 2026-10-02") is not an anchor.
+                sentence_date = date if index == 0 else None
+                kind = _classify_event(text)
+                if sentence_date and kind != "note":
+                    if already_known(text, sentence_date):
+                        continue
+                    events.append({"date": sentence_date, "kind": kind, "text": text[:260]})
+                    seen.append((text, sentence_date))
+                    continue
+                if not 12 <= len(text) <= 220 or "?" in text \
+                        or re.match(r"^(posting|source)\b", text, re.I) \
+                        or re.search(r"documents/applications|https?://|cv/main|cover_letters", text):
+                    continue
+                if already_known(text, sentence_date):
+                    continue
                 context.append(text)
+                seen.append((text, sentence_date or ""))
 
     if applied_date and not any(event["kind"] == "applied" for event in events):
         events.insert(0, {"date": applied_date, "kind": "applied", "text": ""})
