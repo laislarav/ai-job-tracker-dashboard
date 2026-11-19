@@ -984,6 +984,14 @@ function heatmapWeeks(days){
       prevMonth = key;
     }
   });
+
+  // Labels are wider than a week column, so drop one that sits too close to the
+  // next: keeping the later month reads better than letting "AugSep" collide.
+  const labelled = weeks.map((w, i)=>({w, i})).filter(x=>x.w.label);
+  labelled.forEach((x, k)=>{
+    const next = labelled[k+1];
+    if(next && next.i - x.i < 3) x.w.label = '';
+  });
   return weeks;
 }
 

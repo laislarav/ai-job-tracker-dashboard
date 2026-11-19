@@ -1,6 +1,6 @@
 # AI Job Tracker Dashboard
 
-A single-file dashboard for your job search: every application on one kanban board, plus the numbers behind it. Built on top of [AI Job Search](https://github.com/ai-job-search-dev/ai-job-search), offline, no account, no API key.
+A single-file dashboard for your job search: every application on one kanban board, with stats and insights to help you track your progress. Built on top of [AI Job Search](https://github.com/ai-job-search-dev/ai-job-search), offline, no account, no API key.
 
 **[See the demo](https://laislarav.github.io/ai-job-tracker-dashboard/)** — built from the fictional data in `sample/`.
 
