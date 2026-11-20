@@ -14,7 +14,7 @@ This dashboard reads the files that [AI Job Search](https://github.com/ai-job-se
 
 1. Set up the framework: `gh repo clone ai-job-search-dev/ai-job-search` → `/setup` → `/scrape` → `/apply`.
 2. Come back here once your `job_search_tracker.csv` has a few rows.
-3. If you want to see the workflow in action before setting anything up, [The Next New Thing's walkthrough](https://www.youtube.com/watch?v=HoVxjMNFYv4) shows it end to end (recorded August 2026).
+3. If you want to see the workflow in action before setting anything up, [AI Job Search Agent walkthrough](https://www.youtube.com/watch?v=HoVxjMNFYv4) shows it end to end (recorded August 2026).
 
 Already running the framework? Skip to [Quick start](#quick-start).
 
